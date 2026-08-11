@@ -1,4 +1,4 @@
-# ART DIRECTION — 룬 크라운: 그림자 맹세
+# ART DIRECTION — 반역
 
 ## 1. 시각 언어와 부결 원칙
 

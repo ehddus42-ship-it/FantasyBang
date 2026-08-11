@@ -42,9 +42,9 @@ publishRuntimeMetrics();
 
 const icons = { slash: '◆⚔', ward: '⬡', heal: '☾', focus: '◎', cut: '▱', steal: '⌁', duel: '⚔', storm: '✦', foresight: '✧' };
 const descriptions = {
-  slash: '사거리 안 한 영웅을 겨눈다.', ward: '참격을 즉시 막는다.', heal: '거리 1의 인장 하나를 살린다.',
-  focus: '사거리를 바꾸는 유물을 장비한다.', cut: '장비나 무작위 손패를 끊는다.', steal: '가까운 손패 하나를 가져온다.',
-  duel: '참격을 번갈아 버리는 결투다.', storm: '모두 참격을 버리거나 피해를 받는다.', foresight: '주문 두 장을 더 본다.'
+  slash: '거리 안의 상대 1명을 공격한다.', ward: '받는 공격 1회를 막는다.', heal: '거리 1 안의 생명력을 1 회복한다.',
+  focus: '공격 사거리를 2 또는 3으로 바꾼다.', cut: '상대 장비 또는 카드 1장을 파괴한다.', steal: '가까운 상대 카드 1장을 훔친다.',
+  duel: '서로 공격 카드를 내고 먼저 못 낸 쪽이 피해를 받는다.', storm: '다른 모두가 공격 카드를 버리거나 피해를 받는다.', foresight: '카드 2장을 더 뽑는다.'
 };
 
 function escapeHtml(value) {
@@ -67,15 +67,15 @@ function titleScreen() {
   app.innerHTML = `<main class="screen title">
     <section class="title-box" aria-labelledby="game-title">
       <div class="crown" aria-hidden="true">♛</div>
-      <p class="eyebrow">네 개의 봉인 · 하나의 왕관</p>
-      <h1 id="game-title">룬 크라운<br>그림자 맹세</h1>
-      <p class="subtitle">공격도 구원도 충성의 증거가 된다.</p>
-      <label>의식 시드 <input id="seed" value="moon-042" maxlength="32"></label>
-      <p><button class="primary" id="summon">영웅을 소환한다</button></p>
-      <button id="open-rules">규칙을 읽는다</button>
+      <p class="eyebrow">한 명의 왕 · 두 명의 반역자 · 한 명의 야심가</p>
+      <h1 id="game-title">반역</h1>
+      <p class="subtitle">왕을 지킬 것인가, 쓰러뜨릴 것인가.</p>
+      <label>게임 시드 <input id="seed" value="game-042" maxlength="32"></label>
+      <p><button class="primary" id="summon">게임 시작</button></p>
+      <button id="open-rules">규칙 보기</button>
     </section>
   </main>${modalHtml()}`;
-  document.querySelector('#summon').addEventListener('click', () => begin(document.querySelector('#seed').value || 'moon-042'));
+  document.querySelector('#summon').addEventListener('click', () => begin(document.querySelector('#seed').value || 'game-042'));
   document.querySelector('#open-rules').addEventListener('click', () => { modal = 'rules'; titleScreen(); });
   bindModal();
 }
@@ -95,7 +95,7 @@ function act(action) {
   const seat = currentActor(g);
   const before = g.actionLog.length;
   const outcome = transport.send(seat, action);
-  if (!outcome.ok) { showToast(outcome.reason === 'VERSION_CONFLICT' ? '룬이 어긋났다. 최신 판을 다시 읽는다.' : '그 행동은 지금 쓸 수 없다.'); return; }
+  if (!outcome.ok) { showToast(outcome.reason === 'VERSION_CONFLICT' ? '게임 상태가 바뀌었다. 최신 상태를 불러왔다.' : '그 행동은 지금 쓸 수 없다.'); return; }
   selectedCard = null;
   const after = transport.raw();
   const latest = after.actionLog.at(-1);
@@ -123,8 +123,8 @@ function seatHtml(p, state, targetSeats) {
     <img class="portrait" src="${heroImage(p.hero.id)}" alt="${p.hero.name} 초상" data-fallback="${p.hero.name.slice(0,1)}">
     <div class="seat-info"><h2>${p.hero.name}</h2>
       <div class="hp" aria-label="생명력 ${p.hp}/${p.maxHp}">${hearts}</div>
-      <div class="meta">손패 ${p.handCount} · 거리 ${p.distanceFromTurn || 0}${p.equipment ? ` · 초점 ${p.equipment.range}` : ''}</div>
-      <div class="role">${p.role ? ROLE_LABELS[p.role] : '닫힌 맹세'}</div>
+      <div class="meta">손패 ${p.handCount} · 거리 ${p.distanceFromTurn || 0}${p.equipment ? ` · 사거리 ${p.equipment.range}` : ''}</div>
+      <div class="role">${p.role ? ROLE_LABELS[p.role] : '비공개 역할'}</div>
       <span class="controller-badge">${p.controller === 'human' ? '나' : 'AI'}</span>
     </div>
   </article>`;
@@ -140,12 +140,12 @@ function cardHtml(card) {
 function actionLabel(action, state) {
   if (action.type === 'endTurn') return '턴을 넘긴다';
   if (action.type === 'hero') return '영웅 능력을 쓴다';
-  if (action.type === 'discard') return `${CARD_TYPES[state.private.hand.find(c => c.id === action.cardId)?.type]?.name ?? '카드'}를 흘린다`;
-  if (action.type === 'react') return action.useWard ? '결계를 펼친다' : '받아낸다';
+  if (action.type === 'discard') return `${CARD_TYPES[state.private.hand.find(c => c.id === action.cardId)?.type]?.name ?? '카드'}를 버린다`;
+  if (action.type === 'react') return action.useWard ? '방어한다' : '피해를 받는다';
   if (action.target != null) {
     const card = state.private.hand.find(c => c.id === action.cardId);
     const verb = CARD_TYPES[card?.type]?.verb ?? '쓴다';
-    const preview = card?.type === 'slash' ? ` · 미방어 시 인장·손패 한도 ${Math.max(0, state.players[action.target].hp - 1)}` : '';
+    const preview = card?.type === 'slash' ? ` · 방어하지 않으면 생명력·손패 한도 ${Math.max(0, state.players[action.target].hp - 1)}` : '';
     return `${state.players[action.target].hero.name}에게 ${verb}${preview}`;
   }
   return `${CARD_TYPES[state.private.hand.find(c => c.id === action.cardId)?.type]?.verb ?? '카드를 쓴다'}`;
@@ -169,22 +169,22 @@ function render() {
   const shownActions = legal.filter(a => a.type === 'endTurn' || a.type === 'hero' || a.type === 'react' || a.type === 'discard' || (a.type === 'play' && a.cardId === selectedCard));
   const targetSeats = new Set(shownActions.filter(a => a.type === 'play' && a.target != null).map(a => a.target));
   const waitingMessage = state.phase === 'reaction'
-    ? `${state.players[actor].hero.name}가 결계 또는 피해를 고른다.`
-    : '룬이 다음 선택을 기다린다.';
+    ? `${state.players[actor].hero.name}가 방어할지 피해를 받을지 고른다.`
+    : '다음 행동을 기다리는 중.';
   app.innerHTML = `<a class="skip" href="#hand">손패로 건너뛴다</a><main class="screen game">
-    <header class="topbar"><h1>룬 크라운 · ${escapeHtml(state.seed)}</h1>
-      <span class="private-view" aria-label="비공개 플레이어 시점">나의 비공개 시점</span>
-      <button id="rules">규칙을 연다</button><button id="sound" aria-pressed="${muted}">${muted ? '소리를 켠다' : '소리를 끈다'}</button><button id="access">접근성을 연다</button>
+    <header class="topbar"><h1>반역 · ${escapeHtml(state.seed)}</h1>
+      <span class="private-view" aria-label="내 카드만 보는 화면">내 카드만 보는 중</span>
+      <button id="rules">규칙</button><button id="sound" aria-pressed="${muted}">${muted ? '소리 켜기' : '소리 끄기'}</button><button id="access">접근성</button>
     </header>
     <div class="layout">
-      <section class="board" aria-label="원형 균열왕좌">${state.players.map(p => seatHtml(p, state, targetSeats)).join('')}
-        <div class="crown-center"><div><b aria-hidden="true">♛</b><div>왕관수호자 생명력 ${state.crownHp}</div><small>${state.phase === 'reaction' ? '즉시 반응' : `${state.round}라운드 · ${state.totalTurns}턴`}</small></div></div>
+      <section class="board" aria-label="네 명의 플레이어가 앉은 전장">${state.players.map(p => seatHtml(p, state, targetSeats)).join('')}
+        <div class="crown-center"><div><b aria-hidden="true">♛</b><div>왕의 생명력 ${state.crownHp}</div><small>${state.phase === 'reaction' ? '방어 선택' : `${state.round}라운드 · ${state.totalTurns}턴`}</small></div></div>
       </section>
-      <aside class="side"><section class="panel"><h2>나의 맹세 · ${state.private.roleLabel}</h2><p class="goal">${state.private.goal}</p><small>공통: 왕관수호자가 쓰러지거나 적대 맹세가 모두 드러나면 의식이 끝난다.</small></section>
-      <section class="panel"><h2>행동 기록</h2><p class="ai-hint">${escapeHtml(publicAiHint(state))}</p><ol class="log">${state.actionLog.slice(-12).reverse().map(e => `<li>${escapeHtml(e.text)}</li>`).join('') || '<li>첫 주문을 기다린다.</li>'}</ol></section></aside>
+      <aside class="side"><section class="panel"><h2>내 역할 · ${state.private.roleLabel}</h2><p class="goal">${state.private.goal}</p><small>왕이 쓰러지거나 반역자와 야심가가 모두 탈락하면 게임이 끝난다.</small></section>
+      <section class="panel"><h2>행동 기록</h2><p class="ai-hint">${escapeHtml(publicAiHint(state))}</p><ol class="log">${state.actionLog.slice(-12).reverse().map(e => `<li>${escapeHtml(e.text)}</li>`).join('') || '<li>첫 행동을 기다린다.</li>'}</ol></section></aside>
       <section class="hand-zone" id="hand"><div class="hand-title"><h2>${state.players[viewerSeat].hero.name}의 손패 ${state.private.hand.length}</h2><span>${actor === viewerSeat ? '네 차례' : `${state.players[actor].hero.name}의 차례`}</span></div>
-        ${state.totalTurns <= 1 && actor === viewerSeat ? '<p class="first-hint">주문 두 장을 받았다. 빛나는 카드부터 한 장 써 봐.</p>' : ''}
-        <div class="cards">${state.private.hand.map(cardHtml).join('') || '<p>손에 남은 주문이 없다.</p>'}</div>
+        ${state.totalTurns <= 1 && actor === viewerSeat ? '<p class="first-hint">카드 두 장을 받았다. 원하는 카드부터 한 장 써 봐.</p>' : ''}
+        <div class="cards">${state.private.hand.map(cardHtml).join('') || '<p>손에 남은 카드가 없다.</p>'}</div>
         <div class="actions">${canAct ? shownActions.map((a, i) => `<button data-action="${i}" class="${a.type === 'endTurn' ? '' : 'primary'}">${actionLabel(a, state)}</button>`).join('') : `<span>${waitingMessage}</span>`}</div>
       </section>
     </div>
@@ -202,16 +202,16 @@ function render() {
 
 function modalHtml(state) {
   if (!modal) return '';
-  if (modal === 'rules') return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="rules-title"><section class="modal-card rules"><h2 id="rules-title">균열왕좌의 규칙</h2><p><b>뽑기 → 행동 → 반응 → 정리.</b> 자기 턴에 주문 두 장을 받고, 카드를 쓰고, 생명력만큼 손패를 남겨.</p><p>참격은 기본 거리 1에 닿아. 마도초점은 먼 좌석을 열어. 피해를 받으면 생명력과 턴 종료 손패 한도가 함께 줄어.</p><p>왕관수호자는 공개돼. 나머지 맹세는 추방될 때 드러나. 공격과 지원 기록을 읽고 편을 가려.</p><p>키보드는 Tab으로 카드와 버튼을 옮기고 Enter 또는 Space로 선택해.</p><button data-close>판으로 돌아간다</button></section></div>`;
+  if (modal === 'rules') return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="rules-title"><section class="modal-card rules"><h2 id="rules-title">게임 규칙</h2><p><b>뽑기 → 행동 → 방어 → 정리.</b> 자기 턴에 카드 두 장을 받고, 원하는 카드를 쓴 뒤, 생명력만큼 손패를 남겨.</p><p>공격은 기본 거리 1에 닿아. 사거리 강화 카드를 장비하면 먼 상대도 공격할 수 있어. 피해를 받으면 생명력과 턴 종료 손패 한도가 함께 줄어.</p><p>왕의 역할만 처음부터 공개돼. 다른 역할은 탈락할 때 공개돼. 누가 누구를 공격하고 회복했는지 보고 편을 추리해.</p><p>키보드는 Tab으로 카드와 버튼을 옮기고 Enter 또는 Space로 선택해.</p><button data-close>게임으로 돌아가기</button></section></div>`;
   if (modal === 'access') return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="access-title"><section class="modal-card"><h2 id="access-title">접근성</h2><label><input id="reduced" type="checkbox" ${reduced ? 'checked' : ''}> 움직임 줄이기</label><p>글자 크기</p><div class="actions"><button data-font="1">글자를 100%로 맞춘다</button><button data-font="1.15">글자를 115%로 늘린다</button><button data-font="1.3">글자를 130%로 늘린다</button></div><p>색 외에도 아이콘·테두리·동사로 카드 기능을 구분해.</p><button data-close>판으로 돌아간다</button></section></div>`;
-  if (modal === 'oath' && state) return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="oath-title"><section class="modal-card"><div class="role-seal" aria-hidden="true">◉</div><h2 id="oath-title">너는 ${state.players[viewerSeat].hero.name}. 균열왕좌에 소환됐다.</h2><h3>${state.private.roleLabel}</h3><p>${state.private.goal}</p><p><b>왕관수호자가 쓰러지면 즉시 승패를 가른다. 적대 맹세가 모두 드러나도 의식은 끝난다.</b></p><button class="primary" data-close>맹세를 품는다</button></section></div>`;
+  if (modal === 'oath' && state) return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="oath-title"><section class="modal-card"><div class="role-seal" aria-hidden="true">◉</div><h2 id="oath-title">너는 ${state.players[viewerSeat].hero.name}.</h2><h3>이번 역할: ${state.private.roleLabel}</h3><p>${state.private.goal}</p><p><b>왕이 쓰러지면 즉시 승패를 정해. 반역자와 야심가가 모두 탈락해도 게임이 끝나.</b></p><button class="primary" data-close>확인하고 시작</button></section></div>`;
   if (modal === 'result' && state) {
     const r = result(transport.raw());
     const won = r.winners.includes(viewerSeat);
-    const firstAttacker = r.echoes.guardianFirstAttacker == null ? '왕관을 처음 겨눈 맹세는 없었다.' : `${state.players[r.echoes.guardianFirstAttacker].hero.name}가 왕관을 처음 겨뉘다.`;
-    const saved = r.echoes.savedCrownAtOne ? '인장 하나에서 왕관을 살렸다.' : '인장 하나의 구원은 없었다.';
-    const friendly = r.echoes.friendlyExile ? '같은 맹세가 서로를 추방했다.' : '같은 맹세끼리 추방하지 않았다.';
-    return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="result-title"><section class="modal-card result"><div class="role-seal" aria-hidden="true">${won ? '♛' : '◇'}</div><h2 id="result-title">${won ? '왕관이 네 맹세를 골랐다' : '네 맹세가 왕관에서 멀어졌다'}</h2><p>${escapeHtml(r.reason)}</p><p>${r.turns}턴 · 승리 진영 ${ROLE_LABELS[r.outcome] ?? r.outcome}</p><ul class="echoes"><li>${escapeHtml(firstAttacker)}</li><li>${escapeHtml(saved)}</li><li>${escapeHtml(friendly)}</li></ul><div class="actions"><button class="primary" data-restart="same">같은 시드로 다시 맞선다</button><button data-restart="new">새 의식을 연다</button></div></section></div>`;
+    const firstAttacker = r.echoes.guardianFirstAttacker == null ? '왕을 처음 공격한 사람은 없었다.' : `${state.players[r.echoes.guardianFirstAttacker].hero.name}가 왕을 처음 공격했다.`;
+    const saved = r.echoes.savedCrownAtOne ? '왕의 생명력이 1일 때 회복시켰다.' : '왕이 위험할 때 회복시킨 사람은 없었다.';
+    const friendly = r.echoes.friendlyExile ? '같은 역할끼리 서로 탈락시켰다.' : '같은 역할끼리 서로 탈락시키지 않았다.';
+    return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="result-title"><section class="modal-card result"><div class="role-seal" aria-hidden="true">${won ? '♛' : '◇'}</div><h2 id="result-title">${won ? '승리!' : '패배'}</h2><p>${escapeHtml(r.reason)}</p><p>${r.turns}턴 · 승리 역할 ${ROLE_LABELS[r.outcome] ?? r.outcome}</p><ul class="echoes"><li>${escapeHtml(firstAttacker)}</li><li>${escapeHtml(saved)}</li><li>${escapeHtml(friendly)}</li></ul><div class="actions"><button class="primary" data-restart="same">같은 시드로 다시</button><button data-restart="new">새 게임</button></div></section></div>`;
   }
   return '';
 }

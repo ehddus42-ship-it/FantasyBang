@@ -39,7 +39,7 @@ function draw(g, seat, count, reason = 'draw') {
     p.hand.push(card);
     drawn.push(card.type);
   }
-  if (drawn.length) log(g, reason, seat, seat, `${p.hero.name} · 주문 +${drawn.length}`);
+  if (drawn.length) log(g, reason, seat, seat, `${p.hero.name} · 카드 +${drawn.length}`);
 }
 
 function distance(g, from, to) {
@@ -78,16 +78,16 @@ function checkOver(g, killerSeat = null) {
   const hostileAlive = g.players.some(p => p.alive && (p.role === ROLE.RIFT || p.role === ROLE.LASTSTAR));
   if (!guardian.alive) {
     const killer = killerSeat == null ? null : player(g, killerSeat);
-    if (killer?.role === ROLE.LASTSTAR && !g.players.some(p => p.alive && p.role === ROLE.RIFT)) finish(g, 'laststar', '최후성이 왕관을 직접 껐다.');
-    else finish(g, 'rift', '왕관수호자가 쓰러져 균열이 열렸다.');
-  } else if (!hostileAlive) finish(g, 'guardian', '적대 맹세가 모두 드러났다.');
+    if (killer?.role === ROLE.LASTSTAR && !g.players.some(p => p.alive && p.role === ROLE.RIFT)) finish(g, 'laststar', '야심가가 마지막에 왕을 쓰러뜨렸다.');
+    else finish(g, 'rift', '왕이 쓰러져 반역자가 승리했다.');
+  } else if (!hostileAlive) finish(g, 'guardian', '반역자와 야심가가 모두 탈락했다.');
   else if (g.crownVerdict) {
     const rifts = g.players.filter(p => p.alive && p.role === ROLE.RIFT).length;
-    finish(g, rifts ? 'rift' : 'guardian', '세 번째 주문환이 닫히며 왕관이 남은 맹세를 판결했다.');
+    finish(g, rifts ? 'rift' : 'guardian', '카드 더미가 세 번 소진돼 생존 진영으로 승패를 결정했다.');
   }
   else if (g.totalTurns >= MAX_TURNS) {
     const rifts = g.players.filter(p => p.alive && p.role === ROLE.RIFT).length;
-    finish(g, rifts ? 'rift' : 'guardian', '긴 의식 끝에 왕관이 남은 맹세를 판결했다.');
+    finish(g, rifts ? 'rift' : 'guardian', '최대 턴에 도달해 생존 진영으로 승패를 결정했다.');
   }
 }
 
@@ -114,7 +114,7 @@ function damage(g, targetSeat, sourceSeat, cause) {
   p.hp -= 1;
   if (p.hero.id === 'aurelia') p.flags.reprisal = true;
   if (cause === 'slash' && player(g, sourceSeat)?.hero.id === 'nevia') p.status.frost = 1;
-  log(g, 'damage', sourceSeat, targetSeat, `${p.hero.name} · 인장 -1`, cause);
+  log(g, 'damage', sourceSeat, targetSeat, `${p.hero.name} · 생명력 -1`, cause);
   if (p.hp <= 0) {
     p.alive = false;
     p.revealedRole = p.role;
@@ -122,7 +122,7 @@ function damage(g, targetSeat, sourceSeat, cause) {
     p.hand = [];
     if (p.equipment) g.discard.push(p.equipment);
     p.equipment = null;
-    log(g, 'exile', sourceSeat, targetSeat, `${p.hero.name} 추방 · ${ROLE_LABELS[p.role]} 공개`);
+    log(g, 'exile', sourceSeat, targetSeat, `${p.hero.name} 탈락 · 역할 ${ROLE_LABELS[p.role]} 공개`);
     if (p.role === ROLE.GUARDIAN) g.echoes.guardianFirstAttacker ??= sourceSeat;
     if (sourceSeat != null && player(g, sourceSeat)?.role === p.role) g.echoes.friendlyExile = true;
     checkOver(g, sourceSeat);
@@ -149,7 +149,7 @@ function startTurn(g, seat) {
   if (p.hero.id === 'yuna' && drawCount === 3 && p.hand.length) {
     const tossed = p.hand.splice(takeInt(g, p.hand.length), 1)[0];
     g.discard.push(tossed);
-    log(g, 'foresight', seat, seat, `${p.hero.name} · 별 하나를 흘려보냈다`, tossed.type);
+    log(g, 'foresight', seat, seat, `${p.hero.name} · 카드 한 장을 버렸다`, tossed.type);
   }
   checkOver(g);
 }
@@ -177,9 +177,9 @@ function cardActions(g, p, card) {
   return actions;
 }
 
-export function newGame(seed = 'rune-crown', options = {}) {
+export function newGame(seed = 'betrayal', options = {}) {
   const g = {
-    seed: String(seed), rngState: seedNumber(seed), stateVersion: 0, gameId: `rune-${seed}`,
+    seed: String(seed), rngState: seedNumber(seed), stateVersion: 0, gameId: `betrayal-${seed}`,
     phase: 'setup', turnSeat: 0, round: 1, totalTurns: 0, over: false, pending: null,
     deck: [], discard: [], reshuffles: 0, crownVerdict: false, finalDuelExtended: false, players: [], actionLog: [], winners: [], winningFaction: null, endReason: null,
     echoes: { savedCrownAtOne: false, guardianFirstAttacker: null, friendlyExile: false },
@@ -321,14 +321,14 @@ export function step(input, action) {
     const pending = g.pending;
     if (action.useWard) {
       removeCard(g, pending.target, action.cardId);
-      log(g, 'ward', pending.target, pending.target, `${player(g, pending.target).hero.name} · 결계를 펼친다`, 'ward');
+      log(g, 'ward', pending.target, pending.target, `${player(g, pending.target).hero.name} · 방어 카드를 썼다`, 'ward');
     } else damage(g, pending.target, pending.attacker, pending.cardType);
     g.pending = null;
     if (!g.over) g.phase = 'action';
   } else if (action.type === 'hero') {
     action.cardIds.forEach(id => removeCard(g, g.turnSeat, id));
     const p = player(g, g.turnSeat); p.hp = Math.min(p.maxHp, p.hp + 1); p.flags.heroUsed = true;
-    log(g, 'hero', p.seat, p.seat, `${p.hero.name} · 손패 둘을 인장 하나로 바꿨다`);
+    log(g, 'hero', p.seat, p.seat, `${p.hero.name} · 카드 두 장을 버리고 생명력 1 회복`);
   } else if (action.type === 'endTurn') {
     const p = player(g, g.turnSeat);
     if (p.hand.length > p.hp) g.phase = 'discard'; else nextTurn(g);

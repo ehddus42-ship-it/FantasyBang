@@ -1,10 +1,10 @@
 # 시뮬레이션 리포트
 
-- source commit: 51ba37051beae24a21f9594300e91b02d2232499
+- source commit: WORKTREE
 - 시드 수: 200
 - 정책: random, greedy, pure-A, pure-B, mixed, baseline-recommended, baseline-novice
 - 실행 명령: node games/fantasy-bang/build/app/sim/run.mjs --seeds 200 --out games/fantasy-bang/qa/evidence
-- 총 소요: 93.36초
+- 총 소요: 123.05초
 
 ## G1 지배 전략 부재 — PASS
 
@@ -31,7 +31,7 @@
 
 게임 유형: 승패형(좌석 0 관점)
 
-| 정책 | 승률 | 수호자 | 균열단 | 최후성 | 평균 턴 | 데드락 |
+| 정책 | 승률 | 왕 | 반역자 | 야심가 | 평균 턴 | 데드락 |
 |---|---:|---:|---:|---:|---:|---:|
 | random | 21.0% | 6.8% | 34.5% | 2.2% | 45.5 | 0 |
 | greedy | 36.5% | 27.3% | 55.5% | 0.0% | 42.6 | 0 |
@@ -51,7 +51,7 @@
 
 빈 합법 행동 + 미종료: 0건 (기준 0)  
 턴 상한 도달: 0.0% (기준 <1%)  
-루프 밖 정산 지점 검사: 참격 반응·결투·폭풍·추방·턴 상한 뒤 checkOver 호출.
+루프 밖 정산 지점 검사: 공격 반응·결투·전체 공격·탈락·턴 상한 뒤 checkOver 호출.
 
 ## G5 긴장 곡선 — PASS
 

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-11T03:24:33.800Z",
-  "sourceCommit": "51ba37051beae24a21f9594300e91b02d2232499",
+  "generatedAt": "2026-08-11T04:08:50.024Z",
+  "sourceCommit": "WORKTREE",
   "환경": {
     "targetRuntime": "GitHub Pages / latest Chromium and Safari",
     "testedRuntime": "Node v24.16.0 win32 x64 + Codex in-app Chromium",
@@ -9,8 +9,8 @@
   "verify": {
     "command": "node scripts/verify.mjs",
     "exitCode": 0,
-    "durationMs": 95621,
-    "sourceCommit": "51ba37051beae24a21f9594300e91b02d2232499",
+    "durationMs": 125879,
+    "sourceCommit": "WORKTREE",
     "log": "qa/evidence/verify.log"
   },
   "suites": [
@@ -32,9 +32,9 @@
     "passed": true,
     "command": "node scripts/verify.mjs",
     "exitCode": 0,
-    "durationMs": 95621,
+    "durationMs": 125879,
     "runtime": "v24.16.0 win32 x64",
-    "sourceCommit": "51ba37051beae24a21f9594300e91b02d2232499",
+    "sourceCommit": "WORKTREE",
     "log": "qa/evidence/verify.log"
   },
   "checkpoints": [
@@ -63,14 +63,5 @@
       "visual": "qa/evidence/15-restart-oath-desktop.jpg"
     }
   ],
-  "simulation": "qa/evidence/sim-report.md",
-  "deployment": {
-    "commit": "db710ce461937a9c56ca4afc63de805fdc823348",
-    "workflowRun": 31456133052,
-    "workflowState": "PASS",
-    "durationSeconds": 26,
-    "url": "https://ehddus42-ship-it.github.io/FantasyBang/",
-    "browserSmoke": "PASS",
-    "visual": "qa/evidence/16-github-pages-live.jpg"
-  }
+  "simulation": "qa/evidence/sim-report.md"
 }

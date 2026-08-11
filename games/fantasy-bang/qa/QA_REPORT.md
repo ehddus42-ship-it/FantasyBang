@@ -1,4 +1,4 @@
-# QA REPORT — 룬 크라운: 그림자 맹세
+# QA REPORT — 반역
 
 ## 1. 환경표
 
@@ -10,7 +10,7 @@
 | testedRuntime | Windows 11, Node `v24.16.0` x64, Codex in-app Chromium |
 | 기동 | `node scripts/serve.mjs` 후 `http://localhost:4173/` |
 | 로컬 내비게이션 | 38 / 40 / 50ms |
-| 총 배포 파일 | 3,222,024 bytes / 예산 20MB 이내 |
+| 총 배포 파일 | 3,778,800 bytes / 예산 20MB 이내 |
 | 인터랙션→두 번째 페인트 | p50 27.9ms / p95 30.6ms / 최악 30.9ms, 40표본 |
 | long task | 정상 속도 17턴 완주 전 구간 0건 |
 | 런타임 로그 | Chromium console error/warning 0건 |
@@ -185,3 +185,11 @@ vendored·build-output·archived fixture는 없다. Pages workflow는 테스트 
 **PASS** — 열린 `blocker` 0건, `major` 0건이고, 로딩·핵심 동작·추방·결말·재시작에 실행 증거가 있으며 200시드 시뮬레이션 6게이트가 모두 통과했다.
 
 재미·장기 밸런스·리텐션·상업 완성도는 이 판정에 포함하지 않고 `PLAYTEST_PROTOCOL.md`로 인계한다.
+
+## 16. 명칭·일러스트 폴리싱 — 2026-08-11
+
+- 게임 표시 이름을 `반역`으로 통일했다.
+- 역할은 `왕·반역자·야심가`, 카드 기능은 `공격·방어·회복·사거리 강화·카드 파괴·카드 훔치기·결투·전체 공격·추가 뽑기`처럼 효과가 바로 읽히는 이름으로 정리했다.
+- Meshy AI `nano-banana-2`로 영웅 10종을 일본 라이트노벨·모바일 RPG풍으로 다시 생성해 적용했다. 이번 재생성은 60크레딧을 사용했다.
+- `npm.cmd test` 8/8 PASS. 주 기준인 Chromium 1440×900에서 전장·역할·손패·행동 버튼을 한 화면에 배치했고 가로·세로 넘침 0, 최소 버튼 높이 44px, 초상 1024×1024 로드를 확인했다. 390×844 모바일은 보조 호환으로 점검했다.
+- 화면 증거: `17-polish-oath-desktop.jpg`, `19-polish-mobile.jpg`, `23-polish-pc-final-1440x900.jpg`.

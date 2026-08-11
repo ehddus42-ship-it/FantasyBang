@@ -1,4 +1,4 @@
-# WORLD CANON — 룬 크라운: 그림자 맹세
+# WORLD CANON — 반역
 
 ## 1. 세계 정체성
 

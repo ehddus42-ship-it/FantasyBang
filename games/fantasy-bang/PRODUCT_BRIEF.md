@@ -1,4 +1,4 @@
-# PRODUCT BRIEF — 룬 크라운: 그림자 맹세
+# PRODUCT BRIEF — 반역
 
 > 확정 근거: 사용자 요청(판타지 스타일, BANG! 계열의 역할 추리 포함 카드전, 웹/GitHub Pages, Firebase 제외, Meshy 만화풍 서브컬처 이미지, 영웅 수 확대)과 2026-08-11 승인. 저장소 이름 `FantasyBang`은 유지하지만 게임 표시는 오리지널 제목을 쓴다.
 
