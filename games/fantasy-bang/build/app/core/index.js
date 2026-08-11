@@ -56,7 +56,7 @@ function distance(g, from, to) {
 }
 
 function attackRange(p) {
-  let range = p.equipment?.range ?? 1;
+  let range = p.equipment?.focus ?? p.equipment?.range ?? 1;
   if (p.hero.id === 'liana') range += 1;
   if (p.hero.id === 'aurelia' && p.flags.reprisalActive) range += 1;
   return range;
@@ -79,6 +79,16 @@ function randomHand(g, seat) {
 }
 
 function checkOver(g, killerSeat = null) {
+  if (g.players.length === 3) {
+    if (g.over) return;
+    const survivors = alive(g);
+    if (survivors.length === 1) finish(g, survivors[0].role, `${survivors[0].hero.name}가 최후의 생존자가 됐다.`);
+    else if (g.crownVerdict || g.totalTurns >= MAX_TURNS) {
+      const winner = [...survivors].sort((a, b) => b.hp - a.hp || b.hand.length - a.hand.length || a.seat - b.seat)[0];
+      finish(g, winner.role, '최대 턴에 도달해 생명력과 손패가 가장 많은 생존자가 승리했다.');
+    }
+    return;
+  }
   const guardian = g.players.find(p => p.role === ROLE.GUARDIAN);
   const hostileAlive = g.players.some(p => p.alive && (p.role === ROLE.RIFT || p.role === ROLE.LASTSTAR));
   if (!guardian.alive) {
@@ -108,6 +118,26 @@ function finish(g, faction, reason) {
   log(g, 'ending', null, null, reason);
 }
 
+const THREE_PLAYER_TARGET = Object.freeze({
+  [ROLE.KNIGHT]: ROLE.LASTSTAR,
+  [ROLE.LASTSTAR]: ROLE.RIFT,
+  [ROLE.RIFT]: ROLE.KNIGHT
+});
+
+function checkThreePlayerElimination(g, killer, victim) {
+  if (!killer?.alive) return;
+  if (g.threePlayerFinalDuel) {
+    if (alive(g).length === 1) finish(g, killer.role, `${killer.hero.name}가 최후의 생존자가 됐다.`);
+    return;
+  }
+  if (THREE_PLAYER_TARGET[killer.role] === victim.role) {
+    finish(g, killer.role, `${ROLE_LABELS[killer.role]}이 목표인 ${ROLE_LABELS[victim.role]}을 직접 쓰러뜨렸다.`);
+    return;
+  }
+  g.threePlayerFinalDuel = true;
+  log(g, 'finalDuel', killer.seat, victim.seat, '다른 역할이 대신 처치해 남은 두 명의 최후 생존전이 시작됐다.');
+}
+
 function damage(g, targetSeat, sourceSeat, cause) {
   const p = player(g, targetSeat);
   if (!p.alive) return;
@@ -131,8 +161,17 @@ function damage(g, targetSeat, sourceSeat, cause) {
     if (p.role === ROLE.GUARDIAN) g.echoes.guardianFirstAttacker ??= sourceSeat;
     if (sourceSeat != null && player(g, sourceSeat)?.role === p.role) g.echoes.friendlyExile = true;
     const killer = sourceSeat == null ? null : player(g, sourceSeat);
-    if (killer?.alive && sourceSeat !== targetSeat) draw(g, sourceSeat, 3, 'killReward');
-    checkOver(g, sourceSeat);
+    const kingKilledDeputy = killer?.alive && killer.role === ROLE.GUARDIAN && p.role === ROLE.KNIGHT;
+    if (kingKilledDeputy) {
+      const discarded = killer.hand.length + (killer.equipment ? 1 : 0);
+      killer.hand.forEach(card => g.discard.push(card));
+      killer.hand = [];
+      if (killer.equipment) g.discard.push(killer.equipment);
+      killer.equipment = null;
+      log(g, 'deputyPenalty', sourceSeat, targetSeat, `${killer.hero.name} · 부관 처치 벌칙으로 카드 ${discarded}장 전부 버림`);
+    } else if (killer?.alive && sourceSeat !== targetSeat) draw(g, sourceSeat, 3, 'killReward');
+    if (g.players.length === 3) checkThreePlayerElimination(g, killer, p);
+    else checkOver(g, sourceSeat);
   }
 }
 
@@ -184,28 +223,42 @@ function cardActions(g, p, card) {
   return actions;
 }
 
+export function roleMixFor(playerCount) {
+  const mixes = {
+    3: [ROLE.KNIGHT, ROLE.RIFT, ROLE.LASTSTAR],
+    4: [ROLE.GUARDIAN, ROLE.RIFT, ROLE.RIFT, ROLE.LASTSTAR],
+    5: [ROLE.GUARDIAN, ROLE.KNIGHT, ROLE.RIFT, ROLE.RIFT, ROLE.LASTSTAR],
+    6: [ROLE.GUARDIAN, ROLE.KNIGHT, ROLE.RIFT, ROLE.RIFT, ROLE.RIFT, ROLE.LASTSTAR]
+  };
+  if (!mixes[playerCount]) throw new Error('플레이 인원은 3명부터 6명까지 선택할 수 있다.');
+  return [...mixes[playerCount]];
+}
+
 export function newGame(seed = 'betrayal', options = {}) {
+  const playerCount = Number(options.playerCount ?? options.controllers?.length ?? 4);
+  const roleMix = roleMixFor(playerCount);
   const g = {
-    seed: String(seed), rngState: seedNumber(seed), stateVersion: 0, gameId: `betrayal-${seed}`,
+    seed: String(seed), playerCount, rngState: seedNumber(seed), stateVersion: 0, gameId: `betrayal-${playerCount}p-${seed}`,
     phase: 'setup', turnSeat: 0, round: 1, totalTurns: 0, over: false, pending: null,
     deck: [], discard: [], reshuffles: 0, crownVerdict: false, finalDuelExtended: false, players: [], actionLog: [], winners: [], winningFaction: null, endReason: null,
-    echoes: { savedCrownAtOne: false, guardianFirstAttacker: null, friendlyExile: false },
+    threePlayerFinalDuel: false, echoes: { savedCrownAtOne: false, guardianFirstAttacker: null, friendlyExile: false },
     appliedEventIds: [], eventSeq: 0
   };
-  const roles = shuffle(g, [ROLE.GUARDIAN, ROLE.RIFT, ROLE.RIFT, ROLE.LASTSTAR]);
-  const heroes = shuffle(g, HEROES).slice(0, 4);
-  const controllers = options.controllers ?? ['human', 'ai', 'ai', 'ai'];
+  const roles = shuffle(g, roleMix);
+  const heroes = shuffle(g, HEROES).slice(0, playerCount);
+  const controllers = options.controllers ?? Array.from({ length: playerCount }, (_, seat) => seat === 0 ? 'human' : 'ai');
   g.players = roles.map((role, seat) => ({
     seat, controller: controllers[seat] === 'human' ? 'human' : 'ai', role,
-    revealedRole: role === ROLE.GUARDIAN ? role : null, hero: heroes[seat], alive: true,
+    revealedRole: playerCount === 3 || role === ROLE.GUARDIAN ? role : null, hero: heroes[seat], alive: true,
     hp: role === ROLE.GUARDIAN ? 5 : 4,
     maxHp: role === ROLE.GUARDIAN ? 5 : 4,
-    hand: [], equipment: null, status: { frost: 0 }, suspicion: [0, 0, 0, 0], threat: 0,
+    hand: [], equipment: null, status: { frost: 0 }, suspicion: Array(playerCount).fill(0), threat: 0,
     flags: { slashes: 0, heroUsed: false, focusDrawUsed: false, bramShieldUsed: false, reprisal: false, reprisalActive: false }
   }));
   g.deck = shuffle(g, makeDeck());
-  for (let i = 0; i < 4; i++) draw(g, i, 4, 'opening');
-  startTurn(g, 0);
+  for (let i = 0; i < playerCount; i++) draw(g, i, 4, 'opening');
+  const firstRole = playerCount === 3 ? ROLE.KNIGHT : ROLE.GUARDIAN;
+  startTurn(g, g.players.find(p => p.role === firstRole).seat);
   return g;
 }
 
@@ -215,9 +268,9 @@ export function getState(g, viewerSeat = 0) {
 
 export function publicView(g) {
   return {
-    seed: g.seed, stateVersion: g.stateVersion, gameId: g.gameId, phase: g.phase, turnSeat: g.turnSeat,
+    seed: g.seed, playerCount: g.players.length, stateVersion: g.stateVersion, gameId: g.gameId, phase: g.phase, turnSeat: g.turnSeat,
     round: g.round, totalTurns: g.totalTurns, deckCount: g.deck.length, discardCount: g.discard.length,
-    reshuffles: g.reshuffles, crownVerdict: g.crownVerdict, finalDuelExtended: g.finalDuelExtended,
+    reshuffles: g.reshuffles, crownVerdict: g.crownVerdict, finalDuelExtended: g.finalDuelExtended, threePlayerFinalDuel: g.threePlayerFinalDuel,
     players: g.players.map(p => ({ seat: p.seat, controller: p.controller, hero: p.hero, alive: p.alive, hp: p.hp, maxHp: p.maxHp, handCount: p.hand.length, equipment: p.equipment ? { type: p.equipment.type, range: p.equipment.focus } : null, distanceFromTurn: distance(g, g.turnSeat, p.seat), slashesUsed: p.flags.slashes, status: clone(p.status), role: p.revealedRole })),
     actionLog: clone(g.actionLog), crownHp: g.players.find(p => p.role === ROLE.GUARDIAN)?.hp ?? 0,
     aliveSeats: alive(g).map(p => p.seat), revealedRoleCount: g.players.filter(p => p.revealedRole).length,
@@ -229,7 +282,12 @@ export function privateView(g, viewerSeat) {
   const view = publicView(g);
   const mine = player(g, viewerSeat);
   view.viewerSeat = viewerSeat;
-  view.private = mine ? { role: mine.role, roleLabel: ROLE_LABELS[mine.role], goal: ROLE_GOALS[mine.role], hand: clone(mine.hand) } : null;
+  const threePlayerGoals = {
+    [ROLE.KNIGHT]: '야심가를 직접 쓰러뜨려라.',
+    [ROLE.LASTSTAR]: '반역자를 직접 쓰러뜨려라.',
+    [ROLE.RIFT]: '부관을 직접 쓰러뜨려라.'
+  };
+  view.private = mine ? { role: mine.role, roleLabel: ROLE_LABELS[mine.role], goal: g.players.length === 3 ? threePlayerGoals[mine.role] : ROLE_GOALS[mine.role], hand: clone(mine.hand) } : null;
   view.players = view.players.map(p => p.seat === viewerSeat ? { ...p, role: mine.role, hand: clone(mine.hand) } : p);
   view.pending = g.pending && g.pending.target === viewerSeat ? clone(g.pending) : g.pending ? { attacker: g.pending.attacker, target: g.pending.target, cardType: g.pending.cardType } : null;
   view.humanRisk = mine?.hand.length ?? 0;

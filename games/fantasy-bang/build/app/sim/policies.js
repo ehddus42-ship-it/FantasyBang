@@ -1,4 +1,4 @@
-import { legalActions, ROLE } from '../core/index.js?v=20260811-kill1';
+import { legalActions, ROLE } from '../core/index.js?v=20260811-roles1';
 
 function hash(text) {
   let h = 2166136261;
@@ -13,7 +13,7 @@ function actionCard(g, a) {
 
 function publicSuspicion(g, viewer, target) {
   const p = g.players[target];
-  if (p.revealedRole === ROLE.GUARDIAN) return -99;
+  if (p.revealedRole === ROLE.GUARDIAN || p.revealedRole === ROLE.KNIGHT) return -99;
   if (p.revealedRole === ROLE.RIFT || p.revealedRole === ROLE.LASTSTAR) return 99;
   let score = g.players[viewer].suspicion[target] || 0;
   for (const e of g.actionLog) {
@@ -64,6 +64,7 @@ export function chooseAction(g, policy = 'baseline-recommended') {
   const me = g.players[g.turnSeat];
   const guardian = g.players.find(p => p.role === ROLE.GUARDIAN);
   const riftsKnownDead = g.players.filter(p => p.revealedRole === ROLE.RIFT && !p.alive).length;
+  const totalRifts = g.players.filter(p => p.role === ROLE.RIFT).length;
   const scored = actions.map((a, index) => {
     if (a.type === 'endTurn') return { a, s: -20, index };
     if (a.type === 'hero') return { a, s: me.hp <= 2 ? 75 : 10, index };
@@ -78,13 +79,18 @@ export function chooseAction(g, policy = 'baseline-recommended') {
         if (target.revealedRole === ROLE.GUARDIAN) s += 160;
         else s -= suspicion * 20;
       }
-      else if (me.role === ROLE.GUARDIAN) {
-        s += suspicion * 20;
-        if (suspicion <= 0 && ['slash', 'duel'].includes(card?.type)) s -= 90;
+      else if (me.role === ROLE.GUARDIAN || me.role === ROLE.KNIGHT) {
+        if (g.players.length === 3 && me.role === ROLE.KNIGHT) {
+          if (target.role === ROLE.LASTSTAR && ['slash', 'duel', 'cut', 'steal'].includes(card?.type)) s += 240;
+          else if (['slash', 'duel', 'cut', 'steal'].includes(card?.type)) s -= 180;
+        } else {
+          s += suspicion * 20;
+          if (suspicion <= 0 && ['slash', 'duel'].includes(card?.type)) s -= 90;
+        }
       }
       else if (me.role === ROLE.LASTSTAR) {
         const attackCard = ['slash', 'duel', 'cut', 'steal'].includes(card?.type);
-        if (attackCard && target.revealedRole === ROLE.GUARDIAN) s += riftsKnownDead >= 2 ? 110 : -90;
+        if (attackCard && target.revealedRole === ROLE.GUARDIAN) s += riftsKnownDead >= totalRifts ? 110 : -90;
         else s += suspicion * 20;
       }
       if (card?.type === 'heal') {
@@ -92,19 +98,21 @@ export function chooseAction(g, policy = 'baseline-recommended') {
         if (target.seat === me.seat) s += me.hp <= 2 ? 65 : 28;
         if (me.role === ROLE.RIFT && target.revealedRole === ROLE.GUARDIAN) s -= 100;
         if (me.role === ROLE.RIFT && target.revealedRole !== ROLE.GUARDIAN) s += suspicion * 14;
-        if (me.role === ROLE.LASTSTAR && target.revealedRole === ROLE.GUARDIAN && riftsKnownDead < 2) s += 80;
+        if (me.role === ROLE.LASTSTAR && target.revealedRole === ROLE.GUARDIAN && riftsKnownDead < totalRifts) s += 80;
         if (me.role === ROLE.GUARDIAN && target.revealedRole === ROLE.GUARDIAN) s += 60;
+        if (me.role === ROLE.KNIGHT && target.revealedRole === ROLE.GUARDIAN) s += 110;
+        if (g.players.length === 3 && target.seat === me.seat) s += 70;
       }
       if (target.hp === 1 && card?.type !== 'heal') s += 25;
       if (policy === 'baseline-recommended' && target.hp === 1 && ['slash', 'duel'].includes(card?.type)) s += 48;
       if (policy === 'baseline-recommended' && ['slash', 'duel'].includes(card?.type)) {
         const objectiveAttack = (me.role === ROLE.RIFT && target.revealedRole === ROLE.GUARDIAN)
-          || (me.role === ROLE.GUARDIAN && suspicion > 0)
-          || (me.role === ROLE.LASTSTAR && (suspicion > 0 || (target.revealedRole === ROLE.GUARDIAN && riftsKnownDead >= 2)));
+          || ((me.role === ROLE.GUARDIAN || me.role === ROLE.KNIGHT) && suspicion > 0)
+          || (me.role === ROLE.LASTSTAR && (suspicion > 0 || (target.revealedRole === ROLE.GUARDIAN && riftsKnownDead >= totalRifts)));
         if (objectiveAttack) s += 55;
       }
     }
-    if (me.role === ROLE.GUARDIAN && card?.type === 'storm' && !g.players.filter(p => p.alive && p.seat !== me.seat).every(p => publicSuspicion(g, me.seat, p.seat) > 0)) s -= 90;
+    if ((me.role === ROLE.GUARDIAN || me.role === ROLE.KNIGHT) && card?.type === 'storm' && !g.players.filter(p => p.alive && p.seat !== me.seat).every(p => publicSuspicion(g, me.seat, p.seat) > 0)) s -= 90;
     if (policy === 'baseline-recommended' && card?.type === 'storm') {
       if (me.role === ROLE.RIFT) s += 130;
       else if (me.role === ROLE.GUARDIAN) s += 70;
@@ -115,8 +123,8 @@ export function chooseAction(g, policy = 'baseline-recommended') {
       else s += 18;
       let objective = null;
       if (me.role === ROLE.RIFT) objective = guardian;
-      else if (me.role === ROLE.LASTSTAR && riftsKnownDead >= 2) objective = guardian;
-      else if (me.role === ROLE.GUARDIAN || me.role === ROLE.LASTSTAR) {
+      else if (me.role === ROLE.LASTSTAR && riftsKnownDead >= totalRifts) objective = guardian;
+      else if (me.role === ROLE.GUARDIAN || me.role === ROLE.KNIGHT || me.role === ROLE.LASTSTAR) {
         const candidates = g.players.filter(p => p.alive && p.seat !== me.seat)
           .map(p => ({ p, suspicion: expertSuspicion(g, me.seat, p.seat) }))
           .sort((a, b) => b.suspicion - a.suspicion);

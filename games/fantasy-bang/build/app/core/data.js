@@ -1,14 +1,14 @@
 export const ROLE = Object.freeze({ GUARDIAN: 'guardian', RIFT: 'rift', LASTSTAR: 'laststar', KNIGHT: 'knight' });
 
 export const ROLE_LABELS = Object.freeze({
-  guardian: '왕', rift: '반역자', laststar: '야심가', knight: '호위기사'
+  guardian: '왕', rift: '반역자', laststar: '야심가', knight: '부관'
 });
 
 export const ROLE_GOALS = Object.freeze({
-  guardian: '반역자 둘과 야심가를 모두 쓰러뜨려라.',
+  guardian: '모든 반역자와 야심가를 쓰러뜨려라.',
   rift: '정체를 숨기고 왕을 쓰러뜨려라.',
   laststar: '마지막까지 살아남아 왕을 직접 쓰러뜨려라.',
-  knight: '왕을 지켜라. 반역자와 야심가를 모두 쓰러뜨려라.'
+  knight: '왕을 지켜라. 왕이 승리하면 함께 승리한다.'
 });
 
 export const HEROES = Object.freeze([

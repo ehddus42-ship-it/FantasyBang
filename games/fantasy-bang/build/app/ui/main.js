@@ -1,6 +1,6 @@
-import { CARD_TYPES, ROLE_LABELS, getState, legalActions, newGame, result } from '../core/index.js?v=20260811-kill1';
-import { createLocalTransport } from '../core/transport.js?v=20260811-kill1';
-import { chooseAction } from '../sim/policies.js?v=20260811-kill1';
+import { CARD_TYPES, ROLE_LABELS, getState, legalActions, newGame, result } from '../core/index.js?v=20260811-roles1';
+import { createLocalTransport } from '../core/transport.js?v=20260811-roles1';
+import { chooseAction } from '../sim/policies.js?v=20260811-roles1';
 import { setMuted, sound } from './audio.js';
 
 const app = document.querySelector('#app');
@@ -67,21 +67,23 @@ function titleScreen() {
   app.innerHTML = `<main class="screen title">
     <section class="title-box" aria-labelledby="game-title">
       <div class="crown" aria-hidden="true">♛</div>
-      <p class="eyebrow">한 명의 왕 · 두 명의 반역자 · 한 명의 야심가</p>
+      <p class="eyebrow">3~6인 비밀 역할 카드전</p>
       <h1 id="game-title">반역</h1>
       <p class="subtitle">왕을 지킬 것인가, 쓰러뜨릴 것인가.</p>
-      <label>게임 시드 <input id="seed" value="game-042" maxlength="32"></label>
+      <div class="title-options"><label>플레이 인원 <select id="player-count"><option value="3">3인 특수전</option><option value="4" selected>4인</option><option value="5">5인</option><option value="6">6인</option></select></label>
+      <label>게임 시드 <input id="seed" value="game-042" maxlength="32"></label></div>
+      <p class="player-note">3인은 공개 역할 특수전 · 4인은 부관 없음 · 5인부터 부관 참가</p>
       <p><button class="primary" id="summon">게임 시작</button></p>
       <button id="open-rules">규칙 보기</button>
     </section>
   </main>${modalHtml()}`;
-  document.querySelector('#summon').addEventListener('click', () => begin(document.querySelector('#seed').value || 'game-042'));
+  document.querySelector('#summon').addEventListener('click', () => begin(document.querySelector('#seed').value || 'game-042', Number(document.querySelector('#player-count').value)));
   document.querySelector('#open-rules').addEventListener('click', () => { modal = 'rules'; titleScreen(); });
   bindModal();
 }
 
-function begin(seed) {
-  transport = createLocalTransport(newGame(seed));
+function begin(seed, playerCount = 4) {
+  transport = createLocalTransport(newGame(seed, { playerCount }));
   viewerSeat = 0;
   modal = 'oath';
   sound('play');
@@ -117,11 +119,14 @@ function scheduleAi() {
   }, reduced ? 80 : 420);
 }
 
-function seatHtml(p, state, targetSeats) {
+function seatHtml(p, state, targetSeats, playerCount) {
   const hearts = '◆'.repeat(Math.max(0, p.hp)) + '◇'.repeat(Math.max(0, p.maxHp - p.hp));
   const targetable = targetSeats.has(p.seat);
   const targetAttrs = targetable ? ` data-target-seat="${p.seat}" role="button" tabindex="0" aria-label="${p.hero.name}을 목표로 선택"` : ` aria-label="${p.hero.name}, 생명력 ${p.hp}"`;
-  return `<article class="seat ${state.turnSeat === p.seat ? 'current' : ''} ${targetable ? 'targetable' : ''} ${p.alive ? '' : 'dead'}" data-seat="${p.seat}"${targetAttrs}>
+  const angle = Math.PI / 2 - (Math.PI * 2 * p.seat / playerCount);
+  const left = (50 + Math.cos(angle) * 33.5).toFixed(2);
+  const top = (50 + Math.sin(angle) * 32).toFixed(2);
+  return `<article class="seat ${state.turnSeat === p.seat ? 'current' : ''} ${targetable ? 'targetable' : ''} ${p.alive ? '' : 'dead'}" data-seat="${p.seat}" style="left:${left}%;top:${top}%"${targetAttrs}>
     <img class="portrait" src="${heroImage(p.hero.id)}" alt="${p.hero.name} 초상" data-fallback="${p.hero.name.slice(0,1)}">
     <div class="seat-info"><h2>${p.hero.name}</h2>
       <div class="hp" aria-label="생명력 ${p.hp}/${p.maxHp}">${hearts}</div>
@@ -178,15 +183,15 @@ function render() {
     ? `${state.players[actor].hero.name}가 방어할지 피해를 받을지 고른다.`
     : '다음 행동을 기다리는 중.';
   app.innerHTML = `<a class="skip" href="#hand">손패로 건너뛴다</a><main class="screen game">
-    <header class="topbar"><h1>반역 · ${escapeHtml(state.seed)}</h1>
+    <header class="topbar"><h1>반역 · ${state.players.length}인 · ${escapeHtml(state.seed)}</h1>
       <span class="private-view" aria-label="내 카드만 보는 화면">내 카드만 보는 중</span>
       <button id="rules">규칙</button><button id="sound" aria-pressed="${muted}">${muted ? '소리 켜기' : '소리 끄기'}</button><button id="access">접근성</button>
     </header>
     <div class="layout">
-      <section class="board" aria-label="네 명의 플레이어가 앉은 전장">${state.players.map(p => seatHtml(p, state, targetSeats)).join('')}
-        <div class="crown-center"><div><b aria-hidden="true">♛</b><div>왕의 생명력 ${state.crownHp}</div><small>${state.phase === 'reaction' ? '방어 선택' : `${state.round}라운드 · ${state.totalTurns}턴`}</small></div></div>
+      <section class="board" data-player-count="${state.players.length}" aria-label="${state.players.length}명의 플레이어가 앉은 전장">${state.players.map(p => seatHtml(p, state, targetSeats, state.players.length)).join('')}
+        <div class="crown-center"><div><b aria-hidden="true">${state.players.length === 3 ? '⚔' : '♛'}</b><div>${state.players.length === 3 ? '3인 최후 결투' : `왕의 생명력 ${state.crownHp}`}</div><small>${state.phase === 'reaction' ? '방어 선택' : `${state.round}라운드 · ${state.totalTurns}턴`}</small></div></div>
       </section>
-      <aside class="side"><section class="panel"><h2>내 역할 · ${state.private.roleLabel}</h2><p class="goal">${state.private.goal}</p><small>왕이 쓰러지거나 반역자와 야심가가 모두 탈락하면 게임이 끝난다.</small></section>
+      <aside class="side"><section class="panel"><h2>내 역할 · ${state.private.roleLabel}</h2><p class="goal">${state.private.goal}</p><small>${state.players.length === 3 ? '자기 목표를 직접 처치하면 승리한다. 다른 사람이 대신 처치하면 남은 둘이 최후까지 싸운다.' : '왕이 쓰러지거나 반역자와 야심가가 모두 탈락하면 게임이 끝난다.'}</small></section>
       <section class="panel"><h2>행동 기록</h2><p class="ai-hint">${escapeHtml(publicAiHint(state))}</p><ol class="log">${state.actionLog.slice(-12).reverse().map(e => `<li>${escapeHtml(e.text)}</li>`).join('') || '<li>첫 행동을 기다린다.</li>'}</ol></section></aside>
       <section class="hand-zone" id="hand"><div class="hand-title"><h2>${state.players[viewerSeat].hero.name}의 손패 ${state.private.hand.length}</h2><span>${actor === viewerSeat ? '네 차례' : `${state.players[actor].hero.name}의 차례`}</span></div>
         ${state.totalTurns <= 1 && actor === viewerSeat ? '<p class="first-hint">카드 두 장을 받았다. 원하는 카드부터 한 장 써 봐.</p>' : ''}
@@ -220,7 +225,7 @@ function render() {
 
 function modalHtml(state) {
   if (!modal) return '';
-  if (modal === 'rules') return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="rules-title"><section class="modal-card rules"><h2 id="rules-title">게임 규칙</h2><p><b>뽑기 → 행동 → 방어 → 정리.</b> 자기 턴에 카드 두 장을 받고, 원하는 카드를 쓴 뒤, 생명력만큼 손패를 남겨.</p><p>공격이나 대상 효과 카드를 고른 뒤 전장에서 빛나는 목표 캐릭터를 선택해. 공격은 기본 거리 1에 닿고, 사거리 강화 카드를 장비하면 먼 상대도 공격할 수 있어. 피해를 받으면 생명력과 턴 종료 손패 한도가 함께 줄어.</p><p><b>마지막 피해로 캐릭터를 처치한 플레이어만 카드 3장을 즉시 뽑아.</b></p><p>왕의 역할만 처음부터 공개돼. 다른 역할은 탈락할 때 공개돼. 누가 누구를 공격하고 회복했는지 보고 편을 추리해.</p><p>키보드는 Tab으로 카드와 목표를 옮기고 Enter 또는 Space로 선택해.</p><button data-close>게임으로 돌아가기</button></section></div>`;
+  if (modal === 'rules') return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="rules-title"><section class="modal-card rules"><h2 id="rules-title">게임 규칙</h2><p><b>뽑기 → 행동 → 방어 → 정리.</b> 자기 턴에 카드 두 장을 받고, 원하는 카드를 쓴 뒤, 생명력만큼 손패를 남겨.</p><p><b>인원 구성:</b> 3인 부관 1·반역자 1·야심가 1 / 4인 왕 1·반역자 2·야심가 1 / 5인 왕 1·부관 1·반역자 2·야심가 1 / 6인 왕 1·부관 1·반역자 3·야심가 1.</p><p><b>3인 특수전:</b> 모든 역할을 공개하고 부관부터 시작해. 부관은 야심가, 야심가는 반역자, 반역자는 부관을 직접 처치하면 승리해. 다른 사람이 대신 처치하면 남은 둘이 최후 생존전을 벌여.</p><p><b>부관:</b> 5인부터 왕과 같은 팀으로 참가해. 왕이 승리하면 부관도 함께 승리해. 왕이 부관을 직접 처치하면 처치 보상 없이 손패와 장비를 전부 버려.</p><p>공격이나 대상 효과 카드를 고른 뒤 전장에서 빛나는 목표 캐릭터를 선택해. 공격은 기본 거리 1에 닿고, 사거리 강화 카드를 장비하면 먼 상대도 공격할 수 있어. 피해를 받으면 생명력과 턴 종료 손패 한도가 함께 줄어.</p><p><b>마지막 피해로 캐릭터를 처치한 플레이어만 카드 3장을 즉시 뽑아.</b></p><p>4~6인전에서는 왕의 역할만 처음부터 공개되고 다른 역할은 탈락할 때 공개돼. 누가 누구를 공격하고 회복했는지 보고 편을 추리해.</p><p>키보드는 Tab으로 카드와 목표를 옮기고 Enter 또는 Space로 선택해.</p><button data-close>게임으로 돌아가기</button></section></div>`;
   if (modal === 'access') return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="access-title"><section class="modal-card"><h2 id="access-title">접근성</h2><label><input id="reduced" type="checkbox" ${reduced ? 'checked' : ''}> 움직임 줄이기</label><p>글자 크기</p><div class="actions"><button data-font="1">글자를 100%로 맞춘다</button><button data-font="1.15">글자를 115%로 늘린다</button><button data-font="1.3">글자를 130%로 늘린다</button></div><p>색 외에도 아이콘·테두리·동사로 카드 기능을 구분해.</p><button data-close>판으로 돌아간다</button></section></div>`;
   if (modal === 'oath' && state) return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="oath-title"><section class="modal-card"><div class="role-seal" aria-hidden="true">◉</div><h2 id="oath-title">너는 ${state.players[viewerSeat].hero.name}.</h2><h3>이번 역할: ${state.private.roleLabel}</h3><p>${state.private.goal}</p><p><b>왕이 쓰러지면 즉시 승패를 정해. 반역자와 야심가가 모두 탈락해도 게임이 끝나.</b></p><button class="primary" data-close>확인하고 시작</button></section></div>`;
   if (modal === 'result' && state) {

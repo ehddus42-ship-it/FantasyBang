@@ -15,26 +15,49 @@
   cursor: pointer;
 }
 
+.board .seat {
+  right: auto;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+}
+
 .seat.targetable:hover,
 .seat.targetable:focus-visible {
   border-color: var(--gold);
   box-shadow: 0 0 0 4px #f1c65b44, 0 0 34px #5db8ffaa;
   outline: none;
-  transform: translateY(-2px);
+  transform: translate(-50%, -52%) scale(1.02);
 }
 
-.seat.targetable[data-seat="0"]:hover,
-.seat.targetable[data-seat="0"]:focus-visible,
-.seat.targetable[data-seat="2"]:hover,
-.seat.targetable[data-seat="2"]:focus-visible {
-  transform: translateX(-50%) translateY(-2px);
+.title-options {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.seat.targetable[data-seat="1"]:hover,
-.seat.targetable[data-seat="1"]:focus-visible,
-.seat.targetable[data-seat="3"]:hover,
-.seat.targetable[data-seat="3"]:focus-visible {
-  transform: translateY(calc(-50% - 2px));
+.title-options label {
+  display: grid;
+  gap: .35rem;
+  text-align: left;
+  color: #d3cde8;
+}
+
+.title-options input,
+.title-options select {
+  min-height: 42px;
+  min-width: 150px;
+  padding: .45rem .6rem;
+  border: 1px solid #645c91;
+  border-radius: 10px;
+  background: #101127;
+  color: var(--cream);
+}
+
+.player-note {
+  margin: .75rem 0 0;
+  color: #beb8dc;
+  font-size: .88rem;
 }
 
 .target-prompt {
@@ -131,6 +154,31 @@
     min-height: 120px;
   }
 
+  .board[data-player-count="5"] .seat {
+    width: 194px;
+    min-height: 116px;
+  }
+
+  .board[data-player-count="6"] .seat {
+    width: 180px;
+    min-height: 110px;
+  }
+
+  .board[data-player-count="5"] .portrait,
+  .board[data-player-count="6"] .portrait {
+    width: 62px;
+    height: 76px;
+  }
+
+  .board[data-player-count="6"] .seat h2 {
+    font-size: .95rem;
+  }
+
+  .board[data-player-count="6"] .meta,
+  .board[data-player-count="6"] .role {
+    font-size: .78rem;
+  }
+
   .portrait {
     width: 72px;
     height: 88px;
@@ -192,6 +240,16 @@
 }
 
 @media (max-width: 520px) {
+  .title-options {
+    gap: .6rem;
+  }
+
+  .title-options label,
+  .title-options input,
+  .title-options select {
+    width: 100%;
+  }
+
   .meta {
     font-size: .75rem;
   }
