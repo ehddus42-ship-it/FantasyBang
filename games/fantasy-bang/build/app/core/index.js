@@ -39,7 +39,12 @@ function draw(g, seat, count, reason = 'draw') {
     p.hand.push(card);
     drawn.push(card.type);
   }
-  if (drawn.length) log(g, reason, seat, seat, `${p.hero.name} · 카드 +${drawn.length}`);
+  if (drawn.length) {
+    const text = reason === 'killReward'
+      ? `${p.hero.name} · 처치 보상 카드 +${drawn.length}`
+      : `${p.hero.name} · 카드 +${drawn.length}`;
+    log(g, reason, seat, seat, text);
+  }
 }
 
 function distance(g, from, to) {
@@ -125,6 +130,8 @@ function damage(g, targetSeat, sourceSeat, cause) {
     log(g, 'exile', sourceSeat, targetSeat, `${p.hero.name} 탈락 · 역할 ${ROLE_LABELS[p.role]} 공개`);
     if (p.role === ROLE.GUARDIAN) g.echoes.guardianFirstAttacker ??= sourceSeat;
     if (sourceSeat != null && player(g, sourceSeat)?.role === p.role) g.echoes.friendlyExile = true;
+    const killer = sourceSeat == null ? null : player(g, sourceSeat);
+    if (killer?.alive && sourceSeat !== targetSeat) draw(g, sourceSeat, 3, 'killReward');
     checkOver(g, sourceSeat);
   }
 }

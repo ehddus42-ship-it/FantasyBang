@@ -3,85 +3,85 @@
   "policies": [
     {
       "policy": "random",
-      "win": 0.21,
+      "win": 0.17,
       "roleWin": {
-        "guardian": 0.06818181818181818,
-        "rift": 0.34545454545454546,
-        "laststar": 0.021739130434782608
+        "guardian": 0.022727272727272728,
+        "rift": 0.3,
+        "laststar": 0
       },
-      "turns": 45.54,
+      "turns": 45.055,
       "deadlocks": 0,
       "caps": 0
     },
     {
       "policy": "greedy",
-      "win": 0.365,
+      "win": 0.37,
       "roleWin": {
-        "guardian": 0.2727272727272727,
-        "rift": 0.5545454545454546,
+        "guardian": 0.3181818181818182,
+        "rift": 0.5454545454545454,
         "laststar": 0
       },
-      "turns": 42.595,
+      "turns": 41.995,
       "deadlocks": 0,
       "caps": 0
     },
     {
       "policy": "pure-A",
-      "win": 0.235,
+      "win": 0.275,
       "roleWin": {
-        "guardian": 0.06818181818181818,
-        "rift": 0.4,
+        "guardian": 0.11363636363636363,
+        "rift": 0.45454545454545453,
         "laststar": 0
       },
-      "turns": 40.03,
+      "turns": 39.24,
       "deadlocks": 0,
       "caps": 0
     },
     {
       "policy": "pure-B",
-      "win": 0.37,
+      "win": 0.385,
       "roleWin": {
-        "guardian": 0.25,
-        "rift": 0.5727272727272728,
+        "guardian": 0.2727272727272727,
+        "rift": 0.5909090909090909,
         "laststar": 0
       },
-      "turns": 43.625,
+      "turns": 42.79,
       "deadlocks": 0,
       "caps": 0
     },
     {
       "policy": "mixed",
-      "win": 0.48,
+      "win": 0.435,
       "roleWin": {
         "guardian": 0.36363636363636365,
-        "rift": 0.7090909090909091,
+        "rift": 0.6272727272727273,
         "laststar": 0.043478260869565216
       },
-      "turns": 43.375,
+      "turns": 43.385,
       "deadlocks": 0,
       "caps": 0
     },
     {
       "policy": "baseline-recommended",
-      "win": 0.475,
+      "win": 0.455,
       "roleWin": {
-        "guardian": 0.3409090909090909,
-        "rift": 0.7181818181818181,
+        "guardian": 0.3181818181818182,
+        "rift": 0.6909090909090909,
         "laststar": 0.021739130434782608
       },
-      "turns": 44.485,
+      "turns": 43.27,
       "deadlocks": 0,
       "caps": 0
     },
     {
       "policy": "baseline-novice",
-      "win": 0.365,
+      "win": 0.37,
       "roleWin": {
-        "guardian": 0.2727272727272727,
-        "rift": 0.5545454545454546,
+        "guardian": 0.3181818181818182,
+        "rift": 0.5454545454545454,
         "laststar": 0
       },
-      "turns": 42.595,
+      "turns": 41.995,
       "deadlocks": 0,
       "caps": 0
     }
@@ -95,9 +95,9 @@
     "G6": true
   },
   "representative": 546,
-  "entropy": 0.8488453538450104,
-  "maxShare": 0.23076923076923078,
-  "winGap": 0.265,
+  "entropy": 0.8875813944262407,
+  "maxShare": 0.22527472527472528,
+  "winGap": 0.28500000000000003,
   "capRate": 0,
-  "recovered": 0.97
+  "recovered": 0.985
 }

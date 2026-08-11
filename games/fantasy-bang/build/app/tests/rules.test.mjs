@@ -34,3 +34,31 @@ test('rules:reaction — ward and pass are both explicit serializable actions', 
   assert.ok(actions.some(a => a.type === 'react' && !a.useWard));
   assert.doesNotThrow(() => JSON.stringify(actions));
 });
+
+test('rules:kill reward — only the player who lands the final damage draws three cards', () => {
+  let g = newGame('kill-reward-rule');
+  const killerSeat = g.turnSeat;
+  const killer = g.players[killerSeat];
+  const slash = g.deck.find(c => c.type === 'slash');
+  g.deck = g.deck.filter(c => c !== slash);
+  killer.hand.push(slash);
+  const attack = legalActions(g).find(a => a.type === 'play' && a.cardId === slash.id && a.target != null);
+  const victimSeat = attack.target;
+  const victim = g.players[victimSeat];
+  victim.hp = 1;
+  victim.hand = [];
+  const otherHands = g.players.map(p => p.hand.length);
+  const killerHandBefore = killer.hand.length;
+
+  g = step(g, attack);
+  const takeDamage = legalActions(g).find(a => a.type === 'react' && !a.useWard);
+  g = step(g, takeDamage);
+
+  assert.equal(g.players[victimSeat].alive, false);
+  assert.equal(g.players[killerSeat].hand.length, killerHandBefore - 1 + 3);
+  g.players.forEach((p, seat) => {
+    if (seat === killerSeat || seat === victimSeat) return;
+    assert.equal(p.hand.length, otherHands[seat]);
+  });
+  assert.match(g.actionLog.find(entry => entry.type === 'killReward')?.text ?? '', /처치 보상 카드 \+3/);
+});
