@@ -100,7 +100,7 @@ function act(action) {
   const after = transport.raw();
   const latest = after.actionLog.at(-1);
   if (after.over) { modal = 'result'; sound(after.winners.includes(viewerSeat) ? 'victory' : 'damage'); }
-  else if (latest && after.actionLog.length > before) sound(latest.type === 'damage' ? 'damage' : latest.type === 'ward' ? 'ward' : 'play');
+  else if (latest && after.actionLog.length > before) sound(latest.type === 'damage' ? 'damage' : latest.type === 'ward' ? 'ward' : latest.type === 'exile' ? 'exile' : 'play');
   render();
 }
 
@@ -142,8 +142,21 @@ function actionLabel(action, state) {
   if (action.type === 'hero') return '영웅 능력을 쓴다';
   if (action.type === 'discard') return `${CARD_TYPES[state.private.hand.find(c => c.id === action.cardId)?.type]?.name ?? '카드'}를 흘린다`;
   if (action.type === 'react') return action.useWard ? '결계를 펼친다' : '받아낸다';
-  if (action.target != null) return `${state.players[action.target].hero.name}에게 ${CARD_TYPES[state.private.hand.find(c => c.id === action.cardId)?.type]?.verb ?? '쓴다'}`;
+  if (action.target != null) {
+    const card = state.private.hand.find(c => c.id === action.cardId);
+    const verb = CARD_TYPES[card?.type]?.verb ?? '쓴다';
+    const preview = card?.type === 'slash' ? ` · 미방어 시 인장·손패 한도 ${Math.max(0, state.players[action.target].hp - 1)}` : '';
+    return `${state.players[action.target].hero.name}에게 ${verb}${preview}`;
+  }
   return `${CARD_TYPES[state.private.hand.find(c => c.id === action.cardId)?.type]?.verb ?? '카드를 쓴다'}`;
+}
+
+function publicAiHint(state) {
+  const event = [...state.actionLog].reverse().find(entry => entry.actor != null && entry.target != null && state.players[entry.actor]?.controller === 'ai');
+  if (!event) return 'AI는 공개된 거리·생명력·최근 행동을 읽고 표적을 고른다.';
+  const actorName = state.players[event.actor]?.hero.name ?? 'AI';
+  const targetName = state.players[event.target]?.hero.name ?? '표적';
+  return `${actorName}는 공개된 거리·생명력·최근 행동을 보고 ${targetName}을 골랐다.`;
 }
 
 function render() {
@@ -165,10 +178,10 @@ function render() {
     </header>
     <div class="layout">
       <section class="board" aria-label="원형 균열왕좌">${state.players.map(p => seatHtml(p, state, targetSeats)).join('')}
-        <div class="crown-center"><div><b aria-hidden="true">♛</b><div>왕관 인장 ${state.crownHp}</div><small>${state.phase === 'reaction' ? '즉시 반응' : `${state.round}라운드 · ${state.totalTurns}턴`}</small></div></div>
+        <div class="crown-center"><div><b aria-hidden="true">♛</b><div>왕관수호자 생명력 ${state.crownHp}</div><small>${state.phase === 'reaction' ? '즉시 반응' : `${state.round}라운드 · ${state.totalTurns}턴`}</small></div></div>
       </section>
       <aside class="side"><section class="panel"><h2>나의 맹세 · ${state.private.roleLabel}</h2><p class="goal">${state.private.goal}</p><small>공통: 왕관수호자가 쓰러지거나 적대 맹세가 모두 드러나면 의식이 끝난다.</small></section>
-      <section class="panel"><h2>행동 기록</h2><ol class="log">${state.actionLog.slice(-12).reverse().map(e => `<li>${escapeHtml(e.text)}</li>`).join('') || '<li>첫 주문을 기다린다.</li>'}</ol></section></aside>
+      <section class="panel"><h2>행동 기록</h2><p class="ai-hint">${escapeHtml(publicAiHint(state))}</p><ol class="log">${state.actionLog.slice(-12).reverse().map(e => `<li>${escapeHtml(e.text)}</li>`).join('') || '<li>첫 주문을 기다린다.</li>'}</ol></section></aside>
       <section class="hand-zone" id="hand"><div class="hand-title"><h2>${state.players[viewerSeat].hero.name}의 손패 ${state.private.hand.length}</h2><span>${actor === viewerSeat ? '네 차례' : `${state.players[actor].hero.name}의 차례`}</span></div>
         ${state.totalTurns <= 1 && actor === viewerSeat ? '<p class="first-hint">주문 두 장을 받았다. 빛나는 카드부터 한 장 써 봐.</p>' : ''}
         <div class="cards">${state.private.hand.map(cardHtml).join('') || '<p>손에 남은 주문이 없다.</p>'}</div>
@@ -192,7 +205,14 @@ function modalHtml(state) {
   if (modal === 'rules') return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="rules-title"><section class="modal-card rules"><h2 id="rules-title">균열왕좌의 규칙</h2><p><b>뽑기 → 행동 → 반응 → 정리.</b> 자기 턴에 주문 두 장을 받고, 카드를 쓰고, 생명력만큼 손패를 남겨.</p><p>참격은 기본 거리 1에 닿아. 마도초점은 먼 좌석을 열어. 피해를 받으면 생명력과 턴 종료 손패 한도가 함께 줄어.</p><p>왕관수호자는 공개돼. 나머지 맹세는 추방될 때 드러나. 공격과 지원 기록을 읽고 편을 가려.</p><p>키보드는 Tab으로 카드와 버튼을 옮기고 Enter 또는 Space로 선택해.</p><button data-close>판으로 돌아간다</button></section></div>`;
   if (modal === 'access') return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="access-title"><section class="modal-card"><h2 id="access-title">접근성</h2><label><input id="reduced" type="checkbox" ${reduced ? 'checked' : ''}> 움직임 줄이기</label><p>글자 크기</p><div class="actions"><button data-font="1">글자를 100%로 맞춘다</button><button data-font="1.15">글자를 115%로 늘린다</button><button data-font="1.3">글자를 130%로 늘린다</button></div><p>색 외에도 아이콘·테두리·동사로 카드 기능을 구분해.</p><button data-close>판으로 돌아간다</button></section></div>`;
   if (modal === 'oath' && state) return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="oath-title"><section class="modal-card"><div class="role-seal" aria-hidden="true">◉</div><h2 id="oath-title">너는 ${state.players[viewerSeat].hero.name}. 균열왕좌에 소환됐다.</h2><h3>${state.private.roleLabel}</h3><p>${state.private.goal}</p><p><b>왕관수호자가 쓰러지면 즉시 승패를 가른다. 적대 맹세가 모두 드러나도 의식은 끝난다.</b></p><button class="primary" data-close>맹세를 품는다</button></section></div>`;
-  if (modal === 'result' && state) { const r = result(transport.raw()); const won = r.winners.includes(viewerSeat); return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="result-title"><section class="modal-card result"><div class="role-seal" aria-hidden="true">${won ? '♛' : '◇'}</div><h2 id="result-title">${won ? '왕관이 네 맹세를 골랐다' : '네 맹세가 왕관에서 멀어졌다'}</h2><p>${escapeHtml(r.reason)}</p><p>${r.turns}턴 · 승리 진영 ${ROLE_LABELS[r.outcome] ?? r.outcome}</p><div class="actions"><button class="primary" data-restart="same">같은 시드로 다시 맞선다</button><button data-restart="new">새 의식을 연다</button></div></section></div>`; }
+  if (modal === 'result' && state) {
+    const r = result(transport.raw());
+    const won = r.winners.includes(viewerSeat);
+    const firstAttacker = r.echoes.guardianFirstAttacker == null ? '왕관을 처음 겨눈 맹세는 없었다.' : `${state.players[r.echoes.guardianFirstAttacker].hero.name}가 왕관을 처음 겨뉘다.`;
+    const saved = r.echoes.savedCrownAtOne ? '인장 하나에서 왕관을 살렸다.' : '인장 하나의 구원은 없었다.';
+    const friendly = r.echoes.friendlyExile ? '같은 맹세가 서로를 추방했다.' : '같은 맹세끼리 추방하지 않았다.';
+    return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="result-title"><section class="modal-card result"><div class="role-seal" aria-hidden="true">${won ? '♛' : '◇'}</div><h2 id="result-title">${won ? '왕관이 네 맹세를 골랐다' : '네 맹세가 왕관에서 멀어졌다'}</h2><p>${escapeHtml(r.reason)}</p><p>${r.turns}턴 · 승리 진영 ${ROLE_LABELS[r.outcome] ?? r.outcome}</p><ul class="echoes"><li>${escapeHtml(firstAttacker)}</li><li>${escapeHtml(saved)}</li><li>${escapeHtml(friendly)}</li></ul><div class="actions"><button class="primary" data-restart="same">같은 시드로 다시 맞선다</button><button data-restart="new">새 의식을 연다</button></div></section></div>`;
+  }
   return '';
 }
 

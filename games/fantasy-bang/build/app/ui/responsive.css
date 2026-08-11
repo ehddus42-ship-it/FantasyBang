@@ -33,6 +33,20 @@
   color: var(--cream);
 }
 
+.ai-hint {
+  margin: 0 0 .45rem;
+  color: #beb8dc;
+  font-size: .8rem;
+  line-height: 1.35;
+}
+
+.echoes {
+  margin: .75rem auto 1rem;
+  max-width: 30rem;
+  text-align: left;
+  color: #d3cde8;
+}
+
 .layout > *,
 .cards,
 .side {

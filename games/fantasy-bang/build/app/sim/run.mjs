@@ -10,6 +10,7 @@ const onlyPolicy = arg('--policy', null);
 const outDir = path.resolve(process.cwd(), arg('--out', 'games/fantasy-bang/qa/evidence'));
 const policies = onlyPolicy ? [onlyPolicy] : ['random', 'greedy', 'pure-A', 'pure-B', 'mixed', 'baseline-recommended', 'baseline-novice'];
 const started = performance.now();
+const sourceCommit = process.env.RUNE_SOURCE_COMMIT || 'WORKTREE';
 
 function play(seed, focalPolicy, collect = false, opponentPolicy = 'baseline-recommended') {
   let g = newGame(`sim-${seed}`, { controllers: ['ai', 'ai', 'ai', 'ai'] });
@@ -100,7 +101,7 @@ const optimalTable = [...optimal.entries()].sort((a,b)=>b[1]-a[1]).map(([k,n]) =
 const statsTable = policyRows.map(r => `| ${r.policy} | ${pct(r.win)} | ${pct(r.roleWin.guardian)} | ${pct(r.roleWin.rift)} | ${pct(r.roleWin.laststar)} | ${r.turns.toFixed(1)} | ${r.deadlocks} |`).join('\n');
 const report = `# 시뮬레이션 리포트
 
-- source commit: WORKTREE
+- source commit: ${sourceCommit}
 - 시드 수: ${seeds}
 - 정책: ${policies.join(', ')}
 - 실행 명령: node games/fantasy-bang/build/app/sim/run.mjs --seeds ${seeds} --out games/fantasy-bang/qa/evidence
