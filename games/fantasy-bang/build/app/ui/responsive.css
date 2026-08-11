@@ -12,6 +12,52 @@
 .seat.targetable {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px #5db8ff33, 0 0 28px #5db8ff66;
+  cursor: pointer;
+}
+
+.seat.targetable:hover,
+.seat.targetable:focus-visible {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px #f1c65b44, 0 0 34px #5db8ffaa;
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.seat.targetable[data-seat="0"]:hover,
+.seat.targetable[data-seat="0"]:focus-visible,
+.seat.targetable[data-seat="2"]:hover,
+.seat.targetable[data-seat="2"]:focus-visible {
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.seat.targetable[data-seat="1"]:hover,
+.seat.targetable[data-seat="1"]:focus-visible,
+.seat.targetable[data-seat="3"]:hover,
+.seat.targetable[data-seat="3"]:focus-visible {
+  transform: translateY(calc(-50% - 2px));
+}
+
+.target-prompt {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: .25rem .5rem;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #120d05;
+  font-size: .74rem;
+  font-weight: 900;
+  box-shadow: 0 3px 14px #0009;
+}
+
+.target-instruction {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: .55rem .75rem;
+  border-left: 3px solid var(--blue);
+  color: var(--cream);
+  background: #5db8ff12;
 }
 
 .controller-badge,

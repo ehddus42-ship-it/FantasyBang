@@ -119,7 +119,9 @@ function scheduleAi() {
 
 function seatHtml(p, state, targetSeats) {
   const hearts = '◆'.repeat(Math.max(0, p.hp)) + '◇'.repeat(Math.max(0, p.maxHp - p.hp));
-  return `<article class="seat ${state.turnSeat === p.seat ? 'current' : ''} ${targetSeats.has(p.seat) ? 'targetable' : ''} ${p.alive ? '' : 'dead'}" data-seat="${p.seat}" aria-label="${p.hero.name}, 생명력 ${p.hp}">
+  const targetable = targetSeats.has(p.seat);
+  const targetAttrs = targetable ? ` data-target-seat="${p.seat}" role="button" tabindex="0" aria-label="${p.hero.name}을 목표로 선택"` : ` aria-label="${p.hero.name}, 생명력 ${p.hp}"`;
+  return `<article class="seat ${state.turnSeat === p.seat ? 'current' : ''} ${targetable ? 'targetable' : ''} ${p.alive ? '' : 'dead'}" data-seat="${p.seat}"${targetAttrs}>
     <img class="portrait" src="${heroImage(p.hero.id)}" alt="${p.hero.name} 초상" data-fallback="${p.hero.name.slice(0,1)}">
     <div class="seat-info"><h2>${p.hero.name}</h2>
       <div class="hp" aria-label="생명력 ${p.hp}/${p.maxHp}">${hearts}</div>
@@ -127,6 +129,7 @@ function seatHtml(p, state, targetSeats) {
       <div class="role">${p.role ? ROLE_LABELS[p.role] : '비공개 역할'}</div>
       <span class="controller-badge">${p.controller === 'human' ? '나' : 'AI'}</span>
     </div>
+    ${targetable ? '<span class="target-prompt">목표로 선택</span>' : ''}
   </article>`;
 }
 
@@ -167,7 +170,10 @@ function render() {
   const canAct = g.players[actor].controller === 'human' && actor === viewerSeat && !modal;
   const legal = legalActions(g);
   const shownActions = legal.filter(a => a.type === 'endTurn' || a.type === 'hero' || a.type === 'react' || a.type === 'discard' || (a.type === 'play' && a.cardId === selectedCard));
-  const targetSeats = new Set(shownActions.filter(a => a.type === 'play' && a.target != null).map(a => a.target));
+  const targetActions = shownActions.filter(a => a.type === 'play' && a.target != null);
+  const directActions = shownActions.filter(a => !(a.type === 'play' && a.target != null));
+  const targetSeats = new Set(targetActions.map(a => a.target));
+  const targetInstruction = targetActions.length ? '<span class="target-instruction">전장에서 빛나는 목표 캐릭터를 선택해.</span>' : '';
   const waitingMessage = state.phase === 'reaction'
     ? `${state.players[actor].hero.name}가 방어할지 피해를 받을지 고른다.`
     : '다음 행동을 기다리는 중.';
@@ -185,14 +191,26 @@ function render() {
       <section class="hand-zone" id="hand"><div class="hand-title"><h2>${state.players[viewerSeat].hero.name}의 손패 ${state.private.hand.length}</h2><span>${actor === viewerSeat ? '네 차례' : `${state.players[actor].hero.name}의 차례`}</span></div>
         ${state.totalTurns <= 1 && actor === viewerSeat ? '<p class="first-hint">카드 두 장을 받았다. 원하는 카드부터 한 장 써 봐.</p>' : ''}
         <div class="cards">${state.private.hand.map(cardHtml).join('') || '<p>손에 남은 카드가 없다.</p>'}</div>
-        <div class="actions">${canAct ? shownActions.map((a, i) => `<button data-action="${i}" class="${a.type === 'endTurn' ? '' : 'primary'}">${actionLabel(a, state)}</button>`).join('') : `<span>${waitingMessage}</span>`}</div>
+        <div class="actions">${canAct ? `${directActions.map((a, i) => `<button data-action="${i}" class="${a.type === 'endTurn' ? '' : 'primary'}">${actionLabel(a, state)}</button>`).join('')}${targetInstruction}` : `<span>${waitingMessage}</span>`}</div>
       </section>
     </div>
   </main>${toastText ? `<div class="toast" role="status" aria-live="polite">${escapeHtml(toastText)}</div>` : ''}${modalHtml(state)}`;
 
   document.querySelectorAll('.portrait').forEach(img => img.addEventListener('error', () => { const box = document.createElement('div'); box.className = 'portrait portrait-fallback'; box.textContent = img.dataset.fallback; box.setAttribute('aria-label', `${img.alt} 대체 실루엣`); img.replaceWith(box); }, { once: true }));
   document.querySelectorAll('[data-card]').forEach(button => button.addEventListener('click', () => { if (!canAct) return; selectedCard = selectedCard === button.dataset.card ? null : button.dataset.card; sound('select'); render(); }));
-  document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => act(shownActions[Number(button.dataset.action)])));
+  document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => act(directActions[Number(button.dataset.action)])));
+  document.querySelectorAll('[data-target-seat]').forEach(seat => {
+    const chooseTarget = () => {
+      const action = targetActions.find(candidate => candidate.target === Number(seat.dataset.targetSeat));
+      if (action) act(action);
+    };
+    seat.addEventListener('click', chooseTarget);
+    seat.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      chooseTarget();
+    });
+  });
   document.querySelector('#rules').addEventListener('click', () => { modal = 'rules'; render(); });
   document.querySelector('#access').addEventListener('click', () => { modal = 'access'; render(); });
   document.querySelector('#sound').addEventListener('click', () => { muted = !muted; localStorage.setItem('rune-muted', muted ? '1' : '0'); setMuted(muted); render(); });
@@ -202,7 +220,7 @@ function render() {
 
 function modalHtml(state) {
   if (!modal) return '';
-  if (modal === 'rules') return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="rules-title"><section class="modal-card rules"><h2 id="rules-title">게임 규칙</h2><p><b>뽑기 → 행동 → 방어 → 정리.</b> 자기 턴에 카드 두 장을 받고, 원하는 카드를 쓴 뒤, 생명력만큼 손패를 남겨.</p><p>공격은 기본 거리 1에 닿아. 사거리 강화 카드를 장비하면 먼 상대도 공격할 수 있어. 피해를 받으면 생명력과 턴 종료 손패 한도가 함께 줄어.</p><p>왕의 역할만 처음부터 공개돼. 다른 역할은 탈락할 때 공개돼. 누가 누구를 공격하고 회복했는지 보고 편을 추리해.</p><p>키보드는 Tab으로 카드와 버튼을 옮기고 Enter 또는 Space로 선택해.</p><button data-close>게임으로 돌아가기</button></section></div>`;
+  if (modal === 'rules') return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="rules-title"><section class="modal-card rules"><h2 id="rules-title">게임 규칙</h2><p><b>뽑기 → 행동 → 방어 → 정리.</b> 자기 턴에 카드 두 장을 받고, 원하는 카드를 쓴 뒤, 생명력만큼 손패를 남겨.</p><p>공격이나 대상 효과 카드를 고른 뒤 전장에서 빛나는 목표 캐릭터를 선택해. 공격은 기본 거리 1에 닿고, 사거리 강화 카드를 장비하면 먼 상대도 공격할 수 있어. 피해를 받으면 생명력과 턴 종료 손패 한도가 함께 줄어.</p><p>왕의 역할만 처음부터 공개돼. 다른 역할은 탈락할 때 공개돼. 누가 누구를 공격하고 회복했는지 보고 편을 추리해.</p><p>키보드는 Tab으로 카드와 목표를 옮기고 Enter 또는 Space로 선택해.</p><button data-close>게임으로 돌아가기</button></section></div>`;
   if (modal === 'access') return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="access-title"><section class="modal-card"><h2 id="access-title">접근성</h2><label><input id="reduced" type="checkbox" ${reduced ? 'checked' : ''}> 움직임 줄이기</label><p>글자 크기</p><div class="actions"><button data-font="1">글자를 100%로 맞춘다</button><button data-font="1.15">글자를 115%로 늘린다</button><button data-font="1.3">글자를 130%로 늘린다</button></div><p>색 외에도 아이콘·테두리·동사로 카드 기능을 구분해.</p><button data-close>판으로 돌아간다</button></section></div>`;
   if (modal === 'oath' && state) return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="oath-title"><section class="modal-card"><div class="role-seal" aria-hidden="true">◉</div><h2 id="oath-title">너는 ${state.players[viewerSeat].hero.name}.</h2><h3>이번 역할: ${state.private.roleLabel}</h3><p>${state.private.goal}</p><p><b>왕이 쓰러지면 즉시 승패를 정해. 반역자와 야심가가 모두 탈락해도 게임이 끝나.</b></p><button class="primary" data-close>확인하고 시작</button></section></div>`;
   if (modal === 'result' && state) {
