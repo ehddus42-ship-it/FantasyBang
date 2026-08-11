@@ -1,6 +1,6 @@
-import { CARD_TYPES, ROLE_LABELS, getState, legalActions, newGame, result } from '../core/index.js?v=20260811-roles1';
-import { createLocalTransport } from '../core/transport.js?v=20260811-roles1';
-import { chooseAction } from '../sim/policies.js?v=20260811-roles1';
+import { CARD_TYPES, ROLE_LABELS, getState, legalActions, newGame, result } from '../core/index.js?v=20260811-roles2';
+import { createLocalTransport } from '../core/transport.js?v=20260811-roles2';
+import { chooseAction } from '../sim/policies.js?v=20260811-roles2';
 import { setMuted, sound } from './audio.js';
 
 const app = document.querySelector('#app');
@@ -125,7 +125,8 @@ function seatHtml(p, state, targetSeats, playerCount) {
   const targetAttrs = targetable ? ` data-target-seat="${p.seat}" role="button" tabindex="0" aria-label="${p.hero.name}을 목표로 선택"` : ` aria-label="${p.hero.name}, 생명력 ${p.hp}"`;
   const angle = Math.PI / 2 - (Math.PI * 2 * p.seat / playerCount);
   const left = (50 + Math.cos(angle) * 33.5).toFixed(2);
-  const top = (50 + Math.sin(angle) * 32).toFixed(2);
+  const verticalRadius = playerCount === 6 ? 34.5 : 32;
+  const top = (50 + Math.sin(angle) * verticalRadius).toFixed(2);
   return `<article class="seat ${state.turnSeat === p.seat ? 'current' : ''} ${targetable ? 'targetable' : ''} ${p.alive ? '' : 'dead'}" data-seat="${p.seat}" style="left:${left}%;top:${top}%"${targetAttrs}>
     <img class="portrait" src="${heroImage(p.hero.id)}" alt="${p.hero.name} 초상" data-fallback="${p.hero.name.slice(0,1)}">
     <div class="seat-info"><h2>${p.hero.name}</h2>
