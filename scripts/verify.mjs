@@ -8,7 +8,7 @@ const simSeeds = Number(process.env.SIM_SEEDS || 200);
 const evidence = path.join(root, 'games/fantasy-bang/qa/evidence');
 fs.mkdirSync(evidence, { recursive: true });
 const gitRun = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' });
-const sourceCommit = gitRun.status === 0 ? gitRun.stdout.trim() : 'WORKTREE';
+const sourceCommit = process.env.RUNE_SOURCE_COMMIT || (gitRun.status === 0 ? gitRun.stdout.trim() : 'WORKTREE');
 const suites = [
   ['suite:core-rules-and-multiplayer', process.execPath, ['--test','games/fantasy-bang/build/app/tests/*.test.mjs']],
   ['suite:simulation', process.execPath, ['games/fantasy-bang/build/app/sim/run.mjs','--seeds',String(simSeeds),'--out','games/fantasy-bang/qa/evidence']]

@@ -1,12 +1,16 @@
 {
-  "generatedAt": "2026-08-11T02:45:54.601Z",
-  "completeRun": {
-    "executed": true,
-    "passed": true,
+  "generatedAt": "2026-08-11T03:14:41.583Z",
+  "sourceCommit": "WORKTREE",
+  "환경": {
+    "targetRuntime": "GitHub Pages / latest Chromium and Safari",
+    "testedRuntime": "Node v24.16.0 win32 x64 + Codex in-app Chromium",
+    "evidenceRoot": "qa/evidence"
+  },
+  "verify": {
     "command": "node scripts/verify.mjs",
     "exitCode": 0,
-    "durationMs": 90221,
-    "runtime": "v24.16.0 win32 x64",
+    "durationMs": 91639,
+    "sourceCommit": "WORKTREE",
     "log": "qa/evidence/verify.log"
   },
   "suites": [
@@ -23,24 +27,40 @@
       "passed": true
     }
   ],
+  "completeRun": {
+    "executed": true,
+    "passed": true,
+    "command": "node scripts/verify.mjs",
+    "exitCode": 0,
+    "durationMs": 91639,
+    "runtime": "v24.16.0 win32 x64",
+    "sourceCommit": "WORKTREE",
+    "log": "qa/evidence/verify.log"
+  },
   "checkpoints": [
     {
       "id": "clean-start",
       "state": "PASS",
-      "runtime": "Node core + static browser entry inspected",
-      "visual": "NOT_RUN: browser automation unavailable in build subtask"
+      "runtime": "Chromium cold start and first human turn",
+      "visual": "qa/evidence/01-title-desktop.jpg; qa/evidence/02-oath-desktop.jpg; qa/evidence/03-first-turn-desktop.jpg"
     },
     {
-      "id": "complete-play",
+      "id": "core-action",
       "state": "PASS",
-      "runtime": "200-seed headless run",
-      "visual": "NOT_RUN: QA stage owns screenshot capture"
+      "runtime": "focus equipment, target selection, and serialized reaction",
+      "visual": "qa/evidence/04-focus-selected-desktop.jpg; qa/evidence/05-target-selection-desktop.jpg; qa/evidence/06-reaction-desktop.jpg"
+    },
+    {
+      "id": "design-result",
+      "state": "PASS",
+      "runtime": "200-seed headless run + normal-speed 17-turn Chromium run",
+      "visual": "qa/evidence/07-first-exile-desktop.jpg; qa/evidence/08-result-desktop.jpg"
     },
     {
       "id": "restart",
       "state": "PASS",
-      "runtime": "restart action and deterministic constructor covered by core",
-      "visual": "NOT_RUN: QA stage owns screenshot capture"
+      "runtime": "same-seed restart returned to oath screen",
+      "visual": "qa/evidence/15-restart-oath-desktop.jpg"
     }
   ],
   "simulation": "qa/evidence/sim-report.md"
