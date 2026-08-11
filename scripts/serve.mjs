@@ -4,7 +4,7 @@ import path from 'node:path';
 import process from 'node:process';
 const root = process.cwd();
 const port = Number(process.env.PORT || 4173);
-const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.json':'application/json; charset=utf-8' };
+const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.json':'application/json; charset=utf-8' };
 http.createServer((req,res)=>{
   const pathname = decodeURIComponent(new URL(req.url, `http://${req.headers.host}`).pathname);
   const target = path.resolve(root, `.${pathname === '/' ? '/index.html' : pathname}`);

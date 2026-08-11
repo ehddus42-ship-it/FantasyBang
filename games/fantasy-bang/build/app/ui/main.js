@@ -53,7 +53,7 @@ function escapeHtml(value) {
 
 function heroImage(id) {
   const file = id === 'miriel' ? 'mirel' : id;
-  return new URL(`../../../../../assets/heroes/${file}.png`, import.meta.url).href;
+  return new URL(`../../../../../assets/heroes/${file}.jpg`, import.meta.url).href;
 }
 
 function showToast(text, kind = 'select') {

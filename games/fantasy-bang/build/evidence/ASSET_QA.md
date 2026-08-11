@@ -10,17 +10,17 @@
 
 | 파일 | 캐릭터/용도 | 시각 식별자 | 결과 |
 |---|---|---|---|
-| `assets/heroes/aurelia.png` | 아우렐리아 | 태양빛 금갑과 검 | 통과 |
-| `assets/heroes/selene.png` | 셀레네 | 은빛 월광과 치유 지팡이 | 통과 |
-| `assets/heroes/kai.png` | 카이 | 보랏빛 그림자와 단검 | 통과 |
-| `assets/heroes/liana.png` | 리아나 | 청록 바람과 활 | 통과 |
-| `assets/heroes/bram.png` | 브람 | 중장갑과 대형 방패 | 통과 |
-| `assets/heroes/mirel.png` | 미르엘 | 연금술 병과 분홍 초승달 | 통과 |
-| `assets/heroes/ragna.png` | 라그나 | 붉은 용갑과 창 | 통과 |
-| `assets/heroes/yuna.png` | 유나 | 별자리와 천구의 | 통과 |
-| `assets/heroes/theo.png` | 테오 | 청색 룬검 | 통과 |
-| `assets/heroes/nevia.png` | 네비아 | 얼음 결정과 옅은 청색 머리 | 통과 |
-| `assets/backgrounds/throne.png` | 게임 보드 배경 | 금빛 균열 왕관, 네 좌석 원형 결계 | 통과 |
+| `assets/heroes/aurelia.jpg` | 아우렐리아 | 태양빛 금갑과 검 | 통과 |
+| `assets/heroes/selene.jpg` | 셀레네 | 은빛 월광과 치유 지팡이 | 통과 |
+| `assets/heroes/kai.jpg` | 카이 | 보랏빛 그림자와 단검 | 통과 |
+| `assets/heroes/liana.jpg` | 리아나 | 청록 바람과 활 | 통과 |
+| `assets/heroes/bram.jpg` | 브람 | 중장갑과 대형 방패 | 통과 |
+| `assets/heroes/mirel.jpg` | 미르엘 | 연금술 병과 분홍 초승달 | 통과 |
+| `assets/heroes/ragna.jpg` | 라그나 | 붉은 용갑과 창 | 통과 |
+| `assets/heroes/yuna.jpg` | 유나 | 별자리와 천구의 | 통과 |
+| `assets/heroes/theo.jpg` | 테오 | 청색 룬검 | 통과 |
+| `assets/heroes/nevia.jpg` | 네비아 | 얼음 결정과 옅은 청색 머리 | 통과 |
+| `assets/backgrounds/throne.jpg` | 게임 보드 배경 | 금빛 균열 왕관, 네 좌석 원형 결계 | 통과 |
 
 ## 배치 검수
 

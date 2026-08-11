@@ -9,7 +9,7 @@
 | testedRuntime | Windows 11, Node `v24.16.0` x64, Codex in-app Chromium |
 | 기동 | `node scripts/serve.mjs` 후 `http://localhost:4173/` |
 | 로컬 내비게이션 | 38 / 40 / 50ms |
-| 총 배포 파일 | 10,326,483 bytes / 예산 20MB 이내 |
+| 총 배포 파일 | 3,175,671 bytes / 예산 20MB 이내 |
 | 인터랙션→두 번째 페인트 | p50 27.9ms / p95 30.6ms / 최악 30.9ms, 40표본 |
 | long task | 정상 속도 17턴 완주 전 구간 0건 |
 | 런타임 로그 | Chromium console error/warning 0건 |

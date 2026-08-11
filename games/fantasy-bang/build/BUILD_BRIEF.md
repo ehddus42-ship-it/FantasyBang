@@ -38,8 +38,8 @@
 
 ### 미술 필수 자산 키와 폴백
 
-- `hero.aurelia`, `hero.selene`, `hero.kai`, `hero.liana`, `hero.bram`, `hero.miriel`, `hero.ragna`, `hero.yuna`, `hero.theo`, `hero.nevia`: `assets/heroes/*.png`. 로드 실패 시 영웅 첫 글자와 그라디언트 실루엣.
-- `background.throne`: `assets/backgrounds/throne.png`. 로드 실패 시 CSS 자정 남색 방사 그라디언트.
+- `hero.aurelia`, `hero.selene`, `hero.kai`, `hero.liana`, `hero.bram`, `hero.miriel`, `hero.ragna`, `hero.yuna`, `hero.theo`, `hero.nevia`: `assets/heroes/*.jpg`. 로드 실패 시 영웅 첫 글자와 그라디언트 실루엣.
+- `background.throne`: `assets/backgrounds/throne.jpg`. 로드 실패 시 CSS 자정 남색 방사 그라디언트.
 - `role.guardian`, `role.knight`, `role.rift`, `role.laststar`, `seal.closed`: 문자·CSS 기하 문양으로 제공.
 - `card.slash`, `card.ward`, `card.heal`, `card.focus`, `card.cut`, `card.steal`, `card.duel`, `card.storm`, `card.foresight`: 문자 룬+테두리+동사로 제공.
 - `soulSeal`, `distanceKnot`: 채움/빈 마름모와 거리 숫자로 제공.
@@ -143,7 +143,7 @@ verification:
 - 1,000시드는 예상 총 실행이 3분을 넘어 오토플레이 계약이 허용한 200시드 층화 표본으로 낮췄고, 축소 사실·사유·대표 상태 수를 리포트에 명시했다.
 - Chromium 실게임: 고정 시드 `moon-042`를 정상 속도로 17턴 완주해 균열단 승리, 첫 추방, 즉시 반응, 결과 화면, 같은 시드 재시작을 확인했다. 런타임 콘솔 오류는 0건이다.
 - 크기·입력: 1024×700, 390×844, 844×390에서 가로 넘침 0, 모바일 터치 버튼 최소 44px을 확인했다. 역할/손패 시점 전환 UI는 실전 화면에서 제거해 타 좌석 비공개 정보를 열람할 수 없다.
-- 성능·용량: 로컬 브라우저 내비게이션 38–50ms, 사용자 입력→두 번째 페인트 p50 27.9ms / p95 30.6ms / 최악 30.9ms, long task 0건이다. 전체 파일은 10,326,483 bytes로 20MB 상한 이내다.
+- 성능·용량: 로컬 브라우저 내비게이션 38–50ms, 사용자 입력→두 번째 페인트 p50 27.9ms / p95 30.6ms / 최악 30.9ms, long task 0건이다. 전체 파일은 3,175,671 bytes로 20MB 상한 이내다.
 - targetRuntime과 testedRuntime 차이: Safari 고유 터치/성능은 `NOT_RUN: 현 세션에 Safari 런타임 없음`이다. GitHub Pages 배포 결과는 푸시 후 QA 보고서에 추가한다.
 
 장르 충실도 4문은 세계/AI가 행동 기록에 반응하고, 각 카드가 구별된 상태를 바꾸며, 비밀 맹세가 반복 공격·지원 동사에 연결되고, 합법 행동이 복수 선택지를 제공함으로 이행됐다. 독립 200시드 재실행에서 G1–G6가 전부 통과해 현 프로토타입 밸런스 게이트는 GO다.
