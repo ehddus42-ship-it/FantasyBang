@@ -63,5 +63,14 @@
       "visual": "qa/evidence/15-restart-oath-desktop.jpg"
     }
   ],
-  "simulation": "qa/evidence/sim-report.md"
+  "simulation": "qa/evidence/sim-report.md",
+  "deployment": {
+    "commit": "db710ce461937a9c56ca4afc63de805fdc823348",
+    "workflowRun": 31456133052,
+    "workflowState": "PASS",
+    "durationSeconds": 26,
+    "url": "https://ehddus42-ship-it.github.io/FantasyBang/",
+    "browserSmoke": "PASS",
+    "visual": "qa/evidence/16-github-pages-live.jpg"
+  }
 }

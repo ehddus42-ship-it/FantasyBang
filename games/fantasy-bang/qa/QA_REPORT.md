@@ -4,12 +4,13 @@
 
 | 항목 | 실측 |
 |---|---|
-| source commit | `51ba37051beae24a21f9594300e91b02d2232499` |
+| 권위 verify source commit | `51ba37051beae24a21f9594300e91b02d2232499` |
+| GitHub Pages 배포 commit | `db710ce461937a9c56ca4afc63de805fdc823348` |
 | targetRuntime | GitHub Pages / 최신 Chromium·Safari 정적 ESM 브라우저 |
 | testedRuntime | Windows 11, Node `v24.16.0` x64, Codex in-app Chromium |
 | 기동 | `node scripts/serve.mjs` 후 `http://localhost:4173/` |
 | 로컬 내비게이션 | 38 / 40 / 50ms |
-| 총 배포 파일 | 3,175,671 bytes / 예산 20MB 이내 |
+| 총 배포 파일 | 3,222,024 bytes / 예산 20MB 이내 |
 | 인터랙션→두 번째 페인트 | p50 27.9ms / p95 30.6ms / 최악 30.9ms, 40표본 |
 | long task | 정상 속도 17턴 완주 전 구간 0건 |
 | 런타임 로그 | Chromium console error/warning 0건 |
@@ -37,7 +38,7 @@
 |---|---|---|---|---|---|
 | `suite:core-rules-and-multiplayer` | `package.json#scripts.test`, `BUILD_BRIEF.md`, `scripts/verify.mjs` | `build/app/tests/core.test.mjs`, `rules.test.mjs` | Node test runner | yes, 8 tests | PASS |
 | `suite:simulation` | `package.json#scripts.simulate`, `BUILD_BRIEF.md`, `scripts/verify.mjs` | `build/app/sim/run.mjs`, `policies.js` | Node ESM CLI, 200 seeds | yes | PASS |
-| GitHub Pages deploy | `.github/workflows/pages.yml` | static repository artifact | GitHub Actions | verify suite와 별도의 deploy job | 배포 후 확인 예정 |
+| GitHub Pages deploy | `.github/workflows/pages.yml` | static repository artifact | GitHub Actions run `31456133052` | verify suite와 별도의 deploy job | PASS, 26초 |
 
 vendored·build-output·archived fixture는 없다. Pages workflow는 테스트 suite가 아니므로 `ORPHANED_TEST_SUITE`로 세지 않았다. 발견된 required suite는 권위 verify에 모두 포함됐다.
 
@@ -58,6 +59,7 @@ vendored·build-output·archived fixture는 없다. Pages workflow는 테스트 
 | 12세 등급 | PASS | 비현실 마법 피해, 유혈·훼손·성적 표현 0 |
 | 오토플레이 6게이트 | PASS | `sim-report.md` |
 | Firebase 실제 네트워크 | 장르 범위 제외 | 이벤트·뷰·권한 계약만 현재 범위 |
+| GitHub Pages 실배포 | PASS | Actions run `31456133052` 성공, 원격 타이틀·맹세 모달·영웅 4장·배경 로드 확인 |
 
 ## 5. 증거 경로
 
@@ -65,7 +67,8 @@ vendored·build-output·archived fixture는 없다. Pages workflow는 테스트 
 - 시뮬레이션: `qa/evidence/sim-report.md`, `sim-results.json`
 - 설계 불변량: `qa/evidence/design-invariants.md`
 - 전제·2분 이해도: `qa/evidence/premise-gate.md`, `onboarding.md`
-- 시각: `qa/evidence/01-title-desktop.jpg`–`15-restart-oath-desktop.jpg`
+- 시각: `qa/evidence/01-title-desktop.jpg`–`16-github-pages-live.jpg`
+- 실배포: `https://ehddus42-ship-it.github.io/FantasyBang/`, Actions run `31456133052`
 - 생성 자산: `build/evidence/ASSET_QA.md`
 
 ## 6. 미테스트 범위
@@ -77,7 +80,6 @@ vendored·build-output·archived fixture는 없다. Pages workflow는 테스트 
 | 5–7인 성약기사 실전 밸런스 | 현재 슬라이스는 4인 | 확장 역할표·카드 풀·인간 테스트 |
 | 10–20분 인간 체감 박자·재방문·리텐션 | 자동 입력 완주는 체감 시간을 증명하지 못함 | `PLAYTEST_PROTOCOL.md` 8명 시연 |
 | 스피커의 실제 효과음 청취 | `NOT_RUN: 브라우저 자동화에 오디오 청취 채널 없음` | 인간 청취. 선택/카드/결계/피해/추방/승패 트리거 코드와 시각 중복 피드백은 확인 |
-| GitHub Pages 원격 URL | 이 보고서 작성 시점은 푸시 전 | 푸시 후 Actions success, HTTP 200, 타이틀 문구 재확인 |
 
 ## 7. 독립 검증
 
