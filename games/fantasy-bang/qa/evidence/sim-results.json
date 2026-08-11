@@ -1,0 +1,103 @@
+{
+  "seeds": 200,
+  "policies": [
+    {
+      "policy": "random",
+      "win": 0.21,
+      "roleWin": {
+        "guardian": 0.06818181818181818,
+        "rift": 0.34545454545454546,
+        "laststar": 0.021739130434782608
+      },
+      "turns": 45.54,
+      "deadlocks": 0,
+      "caps": 0
+    },
+    {
+      "policy": "greedy",
+      "win": 0.365,
+      "roleWin": {
+        "guardian": 0.2727272727272727,
+        "rift": 0.5545454545454546,
+        "laststar": 0
+      },
+      "turns": 42.595,
+      "deadlocks": 0,
+      "caps": 0
+    },
+    {
+      "policy": "pure-A",
+      "win": 0.235,
+      "roleWin": {
+        "guardian": 0.06818181818181818,
+        "rift": 0.4,
+        "laststar": 0
+      },
+      "turns": 40.03,
+      "deadlocks": 0,
+      "caps": 0
+    },
+    {
+      "policy": "pure-B",
+      "win": 0.37,
+      "roleWin": {
+        "guardian": 0.25,
+        "rift": 0.5727272727272728,
+        "laststar": 0
+      },
+      "turns": 43.625,
+      "deadlocks": 0,
+      "caps": 0
+    },
+    {
+      "policy": "mixed",
+      "win": 0.48,
+      "roleWin": {
+        "guardian": 0.36363636363636365,
+        "rift": 0.7090909090909091,
+        "laststar": 0.043478260869565216
+      },
+      "turns": 43.375,
+      "deadlocks": 0,
+      "caps": 0
+    },
+    {
+      "policy": "baseline-recommended",
+      "win": 0.475,
+      "roleWin": {
+        "guardian": 0.3409090909090909,
+        "rift": 0.7181818181818181,
+        "laststar": 0.021739130434782608
+      },
+      "turns": 44.485,
+      "deadlocks": 0,
+      "caps": 0
+    },
+    {
+      "policy": "baseline-novice",
+      "win": 0.365,
+      "roleWin": {
+        "guardian": 0.2727272727272727,
+        "rift": 0.5545454545454546,
+        "laststar": 0
+      },
+      "turns": 42.595,
+      "deadlocks": 0,
+      "caps": 0
+    }
+  ],
+  "gates": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "G5": true,
+    "G6": true
+  },
+  "representative": 546,
+  "entropy": 0.8488453538450104,
+  "maxShare": 0.23076923076923078,
+  "winGap": 0.265,
+  "capRate": 0,
+  "recovered": 0.97
+}

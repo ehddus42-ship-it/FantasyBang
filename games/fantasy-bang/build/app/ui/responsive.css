@@ -1,0 +1,60 @@
+@media (max-height: 760px) and (min-width: 901px) {
+  .board { min-height: 380px; }
+  .seat { width: 176px; min-height: 110px; }
+  .portrait { width: 52px; height: 66px; }
+  .crown-center { width: 96px; height: 96px; }
+  .crown-center b { font-size: 2rem; }
+  .side { gap: .5rem; }
+  .panel { padding: .7rem; }
+  .log { max-height: 110px; }
+}
+
+.seat.targetable {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px #5db8ff33, 0 0 28px #5db8ff66;
+}
+
+.controller-badge,
+.private-view {
+  display: inline-block;
+  padding: .18rem .42rem;
+  border: 1px solid #4e496d;
+  border-radius: 999px;
+  background: #080918;
+  color: #c5beda;
+  font-size: .75rem;
+}
+
+.first-hint {
+  margin: .1rem 0 .35rem;
+  padding: .55rem .7rem;
+  border-left: 3px solid var(--gold);
+  background: #f1c65b12;
+  color: var(--cream);
+}
+
+.layout > *,
+.cards,
+.side {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .layout,
+  .board,
+  .hand-zone,
+  .side {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+.topbar button {
+  min-height: 44px;
+}
+
+@media (max-width: 520px) {
+  .meta {
+    font-size: .75rem;
+  }
+}

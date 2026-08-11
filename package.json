@@ -1,0 +1,13 @@
+{
+  "name": "rune-crown-shadow-oath",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test games/fantasy-bang/build/app/tests/*.test.mjs",
+    "simulate": "node games/fantasy-bang/build/app/sim/run.mjs --seeds 200 --out games/fantasy-bang/qa/evidence",
+    "verify": "node scripts/verify.mjs"
+  },
+  "engines": { "node": ">=20" }
+}

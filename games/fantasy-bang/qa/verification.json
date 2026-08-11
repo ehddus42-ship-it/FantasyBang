@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-08-11T02:45:54.601Z",
+  "completeRun": {
+    "executed": true,
+    "passed": true,
+    "command": "node scripts/verify.mjs",
+    "exitCode": 0,
+    "durationMs": 90221,
+    "runtime": "v24.16.0 win32 x64",
+    "log": "qa/evidence/verify.log"
+  },
+  "suites": [
+    {
+      "id": "suite:core-rules-and-multiplayer",
+      "required": true,
+      "executed": true,
+      "passed": true
+    },
+    {
+      "id": "suite:simulation",
+      "required": true,
+      "executed": true,
+      "passed": true
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "clean-start",
+      "state": "PASS",
+      "runtime": "Node core + static browser entry inspected",
+      "visual": "NOT_RUN: browser automation unavailable in build subtask"
+    },
+    {
+      "id": "complete-play",
+      "state": "PASS",
+      "runtime": "200-seed headless run",
+      "visual": "NOT_RUN: QA stage owns screenshot capture"
+    },
+    {
+      "id": "restart",
+      "state": "PASS",
+      "runtime": "restart action and deterministic constructor covered by core",
+      "visual": "NOT_RUN: QA stage owns screenshot capture"
+    }
+  ],
+  "simulation": "qa/evidence/sim-report.md"
+}
