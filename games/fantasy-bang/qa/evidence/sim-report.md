@@ -1,10 +1,10 @@
 # 시뮬레이션 리포트
 
-- source commit: 324e368d8e1d969f3b878d5ddf39429cb69e871c
+- source commit: 51ba37051beae24a21f9594300e91b02d2232499
 - 시드 수: 200
 - 정책: random, greedy, pure-A, pure-B, mixed, baseline-recommended, baseline-novice
 - 실행 명령: node games/fantasy-bang/build/app/sim/run.mjs --seeds 200 --out games/fantasy-bang/qa/evidence
-- 총 소요: 89.57초
+- 총 소요: 93.36초
 
 ## G1 지배 전략 부재 — PASS
 

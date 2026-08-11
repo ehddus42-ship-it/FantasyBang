@@ -3,14 +3,15 @@
 - 출처: 사용자 대화 및 기존 `ehddus42-ship-it/FantasyBang` 저장소
 - 모드: `quick`
 - 선택된 개념: `왕관 방어 심리전`
-- 현재 단계: `qa`
-- 완료 단계: `intake`, `canon`, `concept`, `design`, `art`, `build`
+- 현재 단계: `delivery`
+- 완료 단계: `intake`, `canon`, `concept`, `design`, `art`, `build`, `qa`
 - gate:intake pass
 - gate:canon pass
 - gate:concept pass
 - gate:design pass
 - gate:art pass
 - gate:build pass
+- gate:qa pass — blocker 0, major 0, 200시드 G1–G6 PASS
 - 대상 저장소: `ehddus42-ship-it/FantasyBang`
 - 대상 배포: GitHub Pages
 - 비고: Firebase 연동은 이번 범위에서 제외하며, 다음 단계에서 연결할 수 있는 데이터 경계만 예비한다. Meshy 크레딧 사용 전부 승인. 영웅 10종 확정.

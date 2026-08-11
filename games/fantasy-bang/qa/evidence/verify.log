@@ -1,16 +1,16 @@
 verify command: node scripts/verify.mjs
 runtime: v24.16.0 win32 x64
-sourceCommit: 324e368d8e1d969f3b878d5ddf39429cb69e871c
+sourceCommit: 51ba37051beae24a21f9594300e91b02d2232499
 
 >>> suite:core-rules-and-multiplayer
-✔ rules:data — 10 heroes, 60 cards, four-seat role mix (1.7646ms)
-✔ rules:determinism — same seed and actions yield byte-identical state (13.1052ms)
-✔ privacy:views — public and another seat view never leak hidden role or hand (0.5941ms)
-✔ rules:legality — every returned action applies and an invented action fails (1.1539ms)
-✔ multiplayer:event — ownership, versions, idempotency, and controller swap (0.7395ms)
-✔ rules:completion — 128 seeds finish without deadlock within turn budget (2067.2836ms)
-✔ rules:focus — equipment changes attack reach and remains out of discard (2.6492ms)
-✔ rules:reaction — ward and pass are both explicit serializable actions (0.5615ms)
+✔ rules:data — 10 heroes, 60 cards, four-seat role mix (1.8335ms)
+✔ rules:determinism — same seed and actions yield byte-identical state (12.5669ms)
+✔ privacy:views — public and another seat view never leak hidden role or hand (0.567ms)
+✔ rules:legality — every returned action applies and an invented action fails (1.2631ms)
+✔ multiplayer:event — ownership, versions, idempotency, and controller swap (0.7951ms)
+✔ rules:completion — 128 seeds finish without deadlock within turn budget (2057.1417ms)
+✔ rules:focus — equipment changes attack reach and remains out of discard (2.8915ms)
+✔ rules:reaction — ward and pass are both explicit serializable actions (0.6118ms)
 ℹ tests 8
 ℹ suites 0
 ℹ pass 8
@@ -18,7 +18,7 @@ sourceCommit: 324e368d8e1d969f3b878d5ddf39429cb69e871c
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 2153.3386
+ℹ duration_ms 2143.6701
 
 
 exitCode: 0
@@ -30,4 +30,4 @@ suite:simulation PASS seeds=200 report=C:\Users\user\Documents\Codex\2026-08-11\
 exitCode: 0
 
 completeRun: PASS
-durationMs: 91830
+durationMs: 95620

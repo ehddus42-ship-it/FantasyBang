@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-11T03:16:47.902Z",
-  "sourceCommit": "324e368d8e1d969f3b878d5ddf39429cb69e871c",
+  "generatedAt": "2026-08-11T03:24:33.800Z",
+  "sourceCommit": "51ba37051beae24a21f9594300e91b02d2232499",
   "환경": {
     "targetRuntime": "GitHub Pages / latest Chromium and Safari",
     "testedRuntime": "Node v24.16.0 win32 x64 + Codex in-app Chromium",
@@ -9,8 +9,8 @@
   "verify": {
     "command": "node scripts/verify.mjs",
     "exitCode": 0,
-    "durationMs": 91831,
-    "sourceCommit": "324e368d8e1d969f3b878d5ddf39429cb69e871c",
+    "durationMs": 95621,
+    "sourceCommit": "51ba37051beae24a21f9594300e91b02d2232499",
     "log": "qa/evidence/verify.log"
   },
   "suites": [
@@ -32,9 +32,9 @@
     "passed": true,
     "command": "node scripts/verify.mjs",
     "exitCode": 0,
-    "durationMs": 91831,
+    "durationMs": 95621,
     "runtime": "v24.16.0 win32 x64",
-    "sourceCommit": "324e368d8e1d969f3b878d5ddf39429cb69e871c",
+    "sourceCommit": "51ba37051beae24a21f9594300e91b02d2232499",
     "log": "qa/evidence/verify.log"
   },
   "checkpoints": [
