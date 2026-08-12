@@ -1,6 +1,7 @@
-import { CARD_TYPES, ROLE_LABELS, getState, legalActions, newGame, result } from '../core/index.js?v=20260811-roles2';
-import { createLocalTransport } from '../core/transport.js?v=20260811-roles2';
-import { chooseAction } from '../sim/policies.js?v=20260811-roles2';
+import { CARD_TYPES, ROLE_LABELS, getState, legalActions, newGame, result } from '../core/index.js?v=20260812-cf1';
+import { createLocalTransport } from '../core/transport.js?v=20260812-cf1';
+import { createCloudflareTransport } from '../core/cloudflare-transport.js?v=20260812-cf1';
+import { chooseAction } from '../sim/policies.js?v=20260812-cf1';
 import { setMuted, sound } from './audio.js';
 
 const app = document.querySelector('#app');
@@ -9,6 +10,7 @@ let viewerSeat = 0;
 let selectedCard = null;
 let modal = null;
 let toastText = '';
+let onlineNotice = '';
 let aiTimer = null;
 let reduced = localStorage.getItem('rune-reduced') === '1';
 let muted = localStorage.getItem('rune-muted') === '1';
@@ -73,11 +75,22 @@ function titleScreen() {
       <div class="title-options"><label>플레이 인원 <select id="player-count"><option value="3">3인 특수전</option><option value="4" selected>4인</option><option value="5">5인</option><option value="6">6인</option></select></label>
       <label>게임 시드 <input id="seed" value="game-042" maxlength="32"></label></div>
       <p class="player-note">3인은 공개 역할 특수전 · 4인은 부관 없음 · 5인부터 부관 참가</p>
-      <p><button class="primary" id="summon">게임 시작</button></p>
+      <p><button class="primary" id="summon">게임 시작 (혼자 + AI)</button></p>
+      <div class="online-box">
+        <p class="online-note">온라인 방 (베타) · 같은 방 코드로 다른 사람과 함께 플레이해.</p>
+        <p><button id="create-room">온라인 방 만들기</button></p>
+        <p class="join-row"><input id="join-code" placeholder="방 코드 입력" maxlength="16"><button id="join-room">입장</button></p>
+        ${onlineNotice ? `<p class="online-status" role="status">${escapeHtml(onlineNotice)}</p>` : ''}
+      </div>
       <button id="open-rules">규칙 보기</button>
     </section>
   </main>${modalHtml()}`;
   document.querySelector('#summon').addEventListener('click', () => begin(document.querySelector('#seed').value || 'game-042', Number(document.querySelector('#player-count').value)));
+  document.querySelector('#create-room').addEventListener('click', () => createOnlineRoom(Number(document.querySelector('#player-count').value), document.querySelector('#seed').value || 'game-042'));
+  document.querySelector('#join-room').addEventListener('click', () => {
+    const code = document.querySelector('#join-code').value.trim();
+    if (code) joinOnlineRoom(code);
+  });
   document.querySelector('#open-rules').addEventListener('click', () => { modal = 'rules'; titleScreen(); });
   bindModal();
 }
@@ -90,10 +103,55 @@ function begin(seed, playerCount = 4) {
   render();
 }
 
+// --- 온라인 방(Cloudflare Durable Object) ------------------------------
+// 방 생성/입장까지만 이번 단계 범위다. AI 진행과 규칙 판정은 서버(GameRoom)가 한다.
+
+async function createOnlineRoom(playerCount, seed) {
+  onlineNotice = '방을 만드는 중…';
+  titleScreen();
+  try {
+    const res = await fetch('/api/rooms', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ playerCount, seed })
+    });
+    if (!res.ok) throw new Error('room-create-failed');
+    const { roomId } = await res.json();
+    joinOnlineRoom(roomId);
+  } catch {
+    onlineNotice = '방을 만들지 못했어. 잠시 뒤 다시 시도해줘.';
+    titleScreen();
+  }
+}
+
+function joinOnlineRoom(roomId) {
+  onlineNotice = `${roomId} 방에 접속하는 중…`;
+  const savedSeat = localStorage.getItem(`rune-room-seat-${roomId}`);
+  const savedToken = localStorage.getItem(`rune-room-token-${roomId}`);
+  transport = createCloudflareTransport({
+    wsUrl: `/api/rooms/${roomId}/ws`,
+    seat: savedSeat != null ? Number(savedSeat) : null,
+    token: savedToken || null,
+    onWelcome: (seat, token) => {
+      viewerSeat = seat;
+      localStorage.setItem(`rune-room-seat-${roomId}`, String(seat));
+      localStorage.setItem(`rune-room-token-${roomId}`, token);
+      history.replaceState(null, '', `?room=${roomId}`);
+      onlineNotice = '';
+      modal = modal ?? 'oath';
+      render();
+    },
+    onRejected: reason => showToast(reason === 'VERSION_CONFLICT' ? '게임 상태가 바뀌었다. 최신 상태를 불러왔다.' : '그 행동은 지금 쓸 수 없다.')
+  });
+  transport.subscribe(() => render());
+  render();
+}
+
 function currentActor(g) { return g.phase === 'reaction' ? g.pending.target : g.turnSeat; }
 
 function act(action) {
   const g = transport.raw();
+  if (!g) return;
   const seat = currentActor(g);
   const before = g.actionLog.length;
   const outcome = transport.send(seat, action);
@@ -108,9 +166,9 @@ function act(action) {
 
 function scheduleAi() {
   clearTimeout(aiTimer);
-  if (!transport) return;
+  if (!transport || transport.isRemote) return; // 온라인 방에서는 서버(GameRoom)가 AI 턴을 진행시킨다.
   const g = transport.raw();
-  if (g.over || modal) return;
+  if (!g || g.over || modal) return;
   const actor = currentActor(g);
   if (g.players[actor].controller !== 'ai') return;
   aiTimer = setTimeout(() => {
@@ -171,10 +229,15 @@ function publicAiHint(state) {
 function render() {
   if (!transport) return titleScreen();
   const g = transport.raw();
-  const state = getState(g, viewerSeat);
+  if (!g) return titleScreen(); // 온라인 방: 서버의 첫 welcome 메시지가 아직 도착하지 않았다.
+  // 로컬 transport는 getState()로 뷰를 직접 계산한다. 온라인 transport는 서버가 이미
+  // 계산해 보낸 privateView를 그대로 쓴다 — 다른 좌석의 손패가 애초에 클라이언트에 없기 때문이다.
+  const state = transport.privateView ? transport.privateView() : getState(g, viewerSeat);
   const actor = currentActor(g);
   const canAct = g.players[actor].controller === 'human' && actor === viewerSeat && !modal;
-  const legal = legalActions(g);
+  // legalActions(g)는 "현재 행동자의 실제 손패"가 필요하다. 온라인 transport의 raw()는
+  // publicView라 다른 좌석의 손패가 없으므로, 내 차례일 때만 서버가 준 legalActions를 쓴다.
+  const legal = !canAct ? [] : (state.legalActions ?? legalActions(g));
   const shownActions = legal.filter(a => a.type === 'endTurn' || a.type === 'hero' || a.type === 'react' || a.type === 'discard' || (a.type === 'play' && a.cardId === selectedCard));
   const targetActions = shownActions.filter(a => a.type === 'play' && a.target != null);
   const directActions = shownActions.filter(a => !(a.type === 'play' && a.target != null));
@@ -247,4 +310,6 @@ function bindModal() {
   document.querySelectorAll('[data-restart]').forEach(button => button.addEventListener('click', () => { const old = transport.raw(); const seed = button.dataset.restart === 'same' ? old.seed : `${old.seed}-${old.stateVersion}`; transport = createLocalTransport(newGame(seed, { controllers: old.players.map(p => p.controller) })); modal = 'oath'; render(); }));
 }
 
-titleScreen();
+const initialRoomId = new URLSearchParams(location.search).get('room');
+if (initialRoomId) joinOnlineRoom(initialRoomId);
+else titleScreen();

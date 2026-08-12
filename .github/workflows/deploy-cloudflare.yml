@@ -1,0 +1,38 @@
+name: Deploy to Cloudflare Workers
+
+# 지금은 수동 실행만 허용한다. wrangler dev 로컬 검증 + wrangler deploy --dry-run을
+# 통과시키기 전까지는 push에 자동으로 걸지 않는다 (인수인계 문서 9번 "주의할 점" 참고).
+# 검증이 끝나면 `on:` 아래에 `push: { branches: [...] }` 를 추가해서 자동 배포로 바꿀 수 있다.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run rule/test suite
+        run: npm test
+
+      - name: Build static assets
+        run: npm run build:static
+
+      - name: Deploy with Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy

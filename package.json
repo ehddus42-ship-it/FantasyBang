@@ -7,7 +7,11 @@
     "start": "node scripts/serve.mjs",
     "test": "node --test games/fantasy-bang/build/app/tests/*.test.mjs",
     "simulate": "node games/fantasy-bang/build/app/sim/run.mjs --seeds 200 --out games/fantasy-bang/qa/evidence",
-    "verify": "node scripts/verify.mjs"
+    "verify": "node scripts/verify.mjs",
+    "build:static": "node scripts/build-static.mjs",
+    "dev:cf": "npm run build:static && wrangler dev",
+    "deploy:dry": "npm run build:static && wrangler deploy --dry-run",
+    "deploy:cf": "npm run build:static && wrangler deploy"
   },
   "engines": {
     "node": ">=20"
