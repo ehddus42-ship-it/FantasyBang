@@ -1,9 +1,11 @@
 name: Deploy to Cloudflare Workers
 
-# 지금은 수동 실행만 허용한다. wrangler dev 로컬 검증 + wrangler deploy --dry-run을
-# 통과시키기 전까지는 push에 자동으로 걸지 않는다 (인수인계 문서 9번 "주의할 점" 참고).
-# 검증이 끝나면 `on:` 아래에 `push: { branches: [...] }` 를 추가해서 자동 배포로 바꿀 수 있다.
+# 이 브랜치에 push하면 자동으로 build:static + wrangler deploy가 돌아간다.
+# (로컬 wrangler dev 검증 + 첫 실배포까지 확인을 마쳤으므로 자동 배포로 전환함.)
+# 필요하면 Actions 탭에서 workflow_dispatch로 수동 재실행도 가능하다.
 on:
+  push:
+    branches: ["claude/repo-permissions-check-vqw0v1"]
   workflow_dispatch: {}
 
 permissions:
