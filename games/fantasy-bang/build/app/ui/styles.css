@@ -5,3 +5,12 @@
 .join-row{display:flex;gap:.5rem;justify-content:center}
 .join-row input{min-height:44px;border:1px solid #645c91;border-radius:12px;background:#100f26;color:var(--cream);padding:.5rem .7rem;max-width:180px}
 .online-status{color:var(--gold);font-weight:700}
+.lobby-seats{list-style:none;margin:1.2rem 0;padding:0;display:flex;flex-direction:column;gap:.5rem;text-align:left}
+.lobby-seat{display:flex;justify-content:space-between;align-items:center;padding:.6rem .9rem;border:1px solid #554d7d;border-radius:12px;background:#0c0f27a6}
+.lobby-seat-num{color:#beb8dc;font-size:.85rem}
+.lobby-seat-status{font-weight:700}
+.lobby-seat.me{border-color:var(--gold);box-shadow:0 0 0 2px #f1c65b33}
+.lobby-seat.me .lobby-seat-status{color:var(--gold)}
+.lobby-seat.claimed .lobby-seat-status{color:var(--blue)}
+.lobby-seat.ai .lobby-seat-status{color:#9891b8}
+.lobby-seat.open .lobby-seat-status{color:#beb8dc}

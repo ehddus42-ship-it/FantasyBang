@@ -1,4 +1,4 @@
-import { legalActions, ROLE } from '../core/index.js?v=20260812-cf1';
+import { legalActions, ROLE } from '../core/index.js?v=20260812-cf2';
 
 function hash(text) {
   let h = 2166136261;

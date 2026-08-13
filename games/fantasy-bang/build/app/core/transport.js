@@ -1,4 +1,4 @@
-import { applyEvent, createEvent, privateView, publicView } from './index.js?v=20260812-cf1';
+import { applyEvent, createEvent, privateView, publicView } from './index.js?v=20260812-cf2';
 
 /**
  * Firebase 대체 로컬 전송 계약.

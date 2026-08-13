@@ -1,7 +1,7 @@
-import { CARD_TYPES, ROLE_LABELS, getState, legalActions, newGame, result } from '../core/index.js?v=20260812-cf1';
-import { createLocalTransport } from '../core/transport.js?v=20260812-cf1';
-import { createCloudflareTransport } from '../core/cloudflare-transport.js?v=20260812-cf1';
-import { chooseAction } from '../sim/policies.js?v=20260812-cf1';
+import { CARD_TYPES, ROLE_LABELS, getState, legalActions, newGame, result } from '../core/index.js?v=20260812-cf2';
+import { createLocalTransport } from '../core/transport.js?v=20260812-cf2';
+import { createCloudflareTransport } from '../core/cloudflare-transport.js?v=20260812-cf2';
+import { chooseAction } from '../sim/policies.js?v=20260812-cf2';
 import { setMuted, sound } from './audio.js';
 
 const app = document.querySelector('#app');
@@ -11,6 +11,9 @@ let selectedCard = null;
 let modal = null;
 let toastText = '';
 let onlineNotice = '';
+let pendingPlayerCount = 4; // 방 만드는 중 titleScreen()이 다시 그려져도(알림 갱신 등) 방금 고른 값이 유지되도록.
+let pendingHumanSeats = null; // null이면 populateHumanSeatOptions()가 총 인원과 같은 값(=전원 사람)을 기본값으로 쓴다.
+let currentRoomId = null; // 로비 화면에서 방 코드를 보여주고 복사할 때 쓴다.
 let aiTimer = null;
 let reduced = localStorage.getItem('rune-reduced') === '1';
 let muted = localStorage.getItem('rune-muted') === '1';
@@ -72,12 +75,14 @@ function titleScreen() {
       <p class="eyebrow">3~6인 비밀 역할 카드전</p>
       <h1 id="game-title">반역</h1>
       <p class="subtitle">왕을 지킬 것인가, 쓰러뜨릴 것인가.</p>
-      <div class="title-options"><label>플레이 인원 <select id="player-count"><option value="3">3인 특수전</option><option value="4" selected>4인</option><option value="5">5인</option><option value="6">6인</option></select></label>
+      <div class="title-options"><label>플레이 인원 <select id="player-count">${[3, 4, 5, 6].map(n => `<option value="${n}" ${n === pendingPlayerCount ? 'selected' : ''}>${n === 3 ? '3인 특수전' : `${n}인`}</option>`).join('')}</select></label>
       <label>게임 시드 <input id="seed" value="game-042" maxlength="32"></label></div>
       <p class="player-note">3인은 공개 역할 특수전 · 4인은 부관 없음 · 5인부터 부관 참가</p>
       <p><button class="primary" id="summon">게임 시작 (혼자 + AI)</button></p>
       <div class="online-box">
         <p class="online-note">온라인 방 (베타) · 같은 방 코드로 다른 사람과 함께 플레이해.</p>
+        <p><label>사람 자리 <select id="human-seats"></select></label></p>
+        <p class="online-note">고른 인원만큼 사람 자리가 열려. 나머지는 처음부터 AI가 앉아.</p>
         <p><button id="create-room">온라인 방 만들기</button></p>
         <p class="join-row"><input id="join-code" placeholder="방 코드 입력" maxlength="16"><button id="join-room">입장</button></p>
         ${onlineNotice ? `<p class="online-status" role="status">${escapeHtml(onlineNotice)}</p>` : ''}
@@ -86,13 +91,35 @@ function titleScreen() {
     </section>
   </main>${modalHtml()}`;
   document.querySelector('#summon').addEventListener('click', () => begin(document.querySelector('#seed').value || 'game-042', Number(document.querySelector('#player-count').value)));
-  document.querySelector('#create-room').addEventListener('click', () => createOnlineRoom(Number(document.querySelector('#player-count').value), document.querySelector('#seed').value || 'game-042'));
+  document.querySelector('#player-count').addEventListener('change', e => { pendingPlayerCount = Number(e.target.value); populateHumanSeatOptions(); });
+  populateHumanSeatOptions(pendingHumanSeats);
+  document.querySelector('#human-seats').addEventListener('change', e => { pendingHumanSeats = Number(e.target.value); });
+  document.querySelector('#create-room').addEventListener('click', () => {
+    pendingPlayerCount = Number(document.querySelector('#player-count').value);
+    pendingHumanSeats = Number(document.querySelector('#human-seats').value);
+    createOnlineRoom(pendingPlayerCount, pendingHumanSeats, document.querySelector('#seed').value || 'game-042');
+  });
   document.querySelector('#join-room').addEventListener('click', () => {
     const code = document.querySelector('#join-code').value.trim();
     if (code) joinOnlineRoom(code);
   });
   document.querySelector('#open-rules').addEventListener('click', () => { modal = 'rules'; titleScreen(); });
   bindModal();
+}
+
+// 방 만들기 화면에서 "총 인원"을 고르면 "사람 자리" 선택지도 그만큼(1..총 인원)으로 다시 그린다.
+// 기본값은 총 인원과 같다(= AI 없이 전원 사람 자리를 기다림, 신고된 버그의 기본 동작을 그대로 고쳐 둔 상태).
+// 총 인원을 줄였는데 이전에 골랐던 사람 자리 수가 그보다 크면 총 인원에 맞춰 줄인다.
+function populateHumanSeatOptions(preferred) {
+  const playerCountSel = document.querySelector('#player-count');
+  const humanSeatsSel = document.querySelector('#human-seats');
+  if (!playerCountSel || !humanSeatsSel) return;
+  const total = Number(playerCountSel.value);
+  const prev = preferred ?? (humanSeatsSel.value ? Number(humanSeatsSel.value) : total);
+  const clamped = Math.min(Math.max(1, prev), total);
+  humanSeatsSel.innerHTML = Array.from({ length: total }, (_, i) => i + 1)
+    .map(n => `<option value="${n}" ${n === clamped ? 'selected' : ''}>${n}명${n < total ? ` · AI ${total - n}명` : ' · AI 없음'}</option>`)
+    .join('');
 }
 
 function begin(seed, playerCount = 4) {
@@ -106,14 +133,14 @@ function begin(seed, playerCount = 4) {
 // --- 온라인 방(Cloudflare Durable Object) ------------------------------
 // 방 생성/입장까지만 이번 단계 범위다. AI 진행과 규칙 판정은 서버(GameRoom)가 한다.
 
-async function createOnlineRoom(playerCount, seed) {
+async function createOnlineRoom(playerCount, humanSeats, seed) {
   onlineNotice = '방을 만드는 중…';
   titleScreen();
   try {
     const res = await fetch('/api/rooms', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ playerCount, seed })
+      body: JSON.stringify({ playerCount, humanSeats, seed })
     });
     if (!res.ok) throw new Error('room-create-failed');
     const { roomId } = await res.json();
@@ -125,25 +152,28 @@ async function createOnlineRoom(playerCount, seed) {
 }
 
 function joinOnlineRoom(roomId) {
+  currentRoomId = roomId;
   onlineNotice = `${roomId} 방에 접속하는 중…`;
   const savedSeat = localStorage.getItem(`rune-room-seat-${roomId}`);
   const savedToken = localStorage.getItem(`rune-room-token-${roomId}`);
+  let gameHasStarted = false; // 로비 -> 실제 게임으로 넘어가는 순간에만 한 번 역할 확인 모달(oath)을 띄운다.
   transport = createCloudflareTransport({
     wsUrl: `/api/rooms/${roomId}/ws`,
     seat: savedSeat != null ? Number(savedSeat) : null,
     token: savedToken || null,
-    onWelcome: (seat, token) => {
+    onSeatAssigned: (seat, token) => {
       viewerSeat = seat;
       localStorage.setItem(`rune-room-seat-${roomId}`, String(seat));
       localStorage.setItem(`rune-room-token-${roomId}`, token);
       history.replaceState(null, '', `?room=${roomId}`);
       onlineNotice = '';
-      modal = modal ?? 'oath';
-      render();
     },
     onRejected: reason => showToast(reason === 'VERSION_CONFLICT' ? '게임 상태가 바뀌었다. 최신 상태를 불러왔다.' : '그 행동은 지금 쓸 수 없다.')
   });
-  transport.subscribe(() => render());
+  transport.subscribe(() => {
+    if (!gameHasStarted && transport.raw()) { gameHasStarted = true; modal = 'oath'; }
+    render();
+  });
   render();
 }
 
@@ -229,7 +259,13 @@ function publicAiHint(state) {
 function render() {
   if (!transport) return titleScreen();
   const g = transport.raw();
-  if (!g) return titleScreen(); // 온라인 방: 서버의 첫 welcome 메시지가 아직 도착하지 않았다.
+  if (!g) {
+    // 온라인 방인데 아직 게임이 시작 전이면(사람 자리가 다 안 찼거나 호스트가 시작을 안 눌렀으면)
+    // 로비 화면을 보여준다 — 이게 없으면 방 만들자마자 AI로 게임이 시작되던 문제가 다시 생긴다.
+    const lobby = transport.lobby?.();
+    if (lobby) return lobbyScreen(lobby);
+    return titleScreen(); // 그 외엔 서버의 첫 응답이 아직 도착하지 않은 것.
+  }
   // 로컬 transport는 getState()로 뷰를 직접 계산한다. 온라인 transport는 서버가 이미
   // 계산해 보낸 privateView를 그대로 쓴다 — 다른 좌석의 손패가 애초에 클라이언트에 없기 때문이다.
   const state = transport.privateView ? transport.privateView() : getState(g, viewerSeat);
@@ -285,6 +321,53 @@ function render() {
   document.querySelector('#sound').addEventListener('click', () => { muted = !muted; localStorage.setItem('rune-muted', muted ? '1' : '0'); setMuted(muted); render(); });
   bindModal();
   scheduleAi();
+}
+
+// 온라인 방이 아직 실제 게임을 시작하기 전(사람 자리가 다 안 찼거나 호스트가 시작을 안 눌렀을 때) 보여주는 화면.
+// 여기서 보이는 좌석 목록은 서버 lobbySnapshotFor()가 보내주는 것 그대로다 — 다른 사람의 손패·역할은
+// 게임이 시작되기 전이라 애초에 존재하지 않으니 이 화면이 노출할 정보 자체가 없다.
+function lobbyScreen(lobby) {
+  const isHost = lobby.seat === lobby.hostSeat;
+  const claimed = new Set(lobby.claimedSeats);
+  const aiSeats = new Set(lobby.aiSeats ?? []);
+  const seats = Array.from({ length: lobby.playerCount }, (_, i) => i);
+  const seatLabel = seat => {
+    if (aiSeats.has(seat)) return { cls: 'ai', text: 'AI (자동)' };
+    if (seat === lobby.seat) return { cls: 'me', text: seat === lobby.hostSeat ? '나 (방장)' : '나' };
+    if (claimed.has(seat)) return { cls: 'claimed', text: seat === lobby.hostSeat ? '누군가 (방장)' : '누군가 입장함' };
+    return { cls: 'open', text: '빈 자리 · 기다리는 중' };
+  };
+  const humanJoined = lobby.claimedSeats.length;
+  app.innerHTML = `<main class="screen title">
+    <section class="title-box" aria-labelledby="lobby-title">
+      <div class="crown" aria-hidden="true">♛</div>
+      <p class="eyebrow">온라인 방 대기 중</p>
+      <h1 id="lobby-title">방 코드 ${escapeHtml(currentRoomId ?? '')}</h1>
+      <p class="subtitle">사람 ${humanJoined}/${lobby.humanSeats}명 입장${aiSeats.size ? ` · AI ${aiSeats.size}명 예약됨` : ''}</p>
+      <ul class="lobby-seats">${seats.map(seat => {
+        const label = seatLabel(seat);
+        return `<li class="lobby-seat ${label.cls}"><span class="lobby-seat-num">${seat + 1}번 자리</span><span class="lobby-seat-status">${label.text}</span></li>`;
+      }).join('')}</ul>
+      ${isHost
+        ? `<p><button class="primary" id="lobby-start">${humanJoined >= lobby.humanSeats ? '게임 시작' : '지금 시작 (남은 사람 자리는 AI가 대신 앉아)'}</button></p>`
+        : '<p class="online-note">방장이 시작하면 바로 게임으로 넘어가.</p>'}
+      <p><button id="lobby-copy">방 코드 복사</button></p>
+      <p><button id="lobby-leave">나가기</button></p>
+    </section>
+  </main>${modalHtml()}`;
+  document.querySelector('#lobby-start')?.addEventListener('click', () => transport?.startGame?.());
+  document.querySelector('#lobby-copy')?.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(currentRoomId ?? ''); showToast('방 코드를 복사했어.'); }
+    catch { showToast('복사에 실패했다. 방 코드를 직접 알려줘.'); }
+  });
+  document.querySelector('#lobby-leave').addEventListener('click', () => {
+    transport?.close?.();
+    transport = null;
+    currentRoomId = null;
+    history.replaceState(null, '', location.pathname);
+    titleScreen();
+  });
+  bindModal();
 }
 
 function modalHtml(state) {

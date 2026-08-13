@@ -29,7 +29,9 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // 방 생성: POST /api/rooms { playerCount, seed }
+    // 방 생성: POST /api/rooms { playerCount, humanSeats, seed }
+    // humanSeats는 "사람이 앉을 좌석 수"다. playerCount보다 적게 주면 나머지는 곧바로 AI 좌석이 된다.
+    // 생략하면 기존과 같이 전원 사람 좌석(=playerCount)으로 취급한다.
     if (url.pathname === '/api/rooms' && request.method === 'POST') {
       let body = {};
       try { body = await request.json(); } catch { /* 빈 본문 허용 */ }
@@ -39,12 +41,17 @@ export default {
         return jsonResponse({ error: 'INVALID_PLAYER_COUNT' }, { status: 400 });
       }
 
+      const humanSeats = body.humanSeats == null ? playerCount : Number(body.humanSeats);
+      if (!Number.isInteger(humanSeats) || humanSeats < 1 || humanSeats > playerCount) {
+        return jsonResponse({ error: 'INVALID_HUMAN_SEATS' }, { status: 400 });
+      }
+
       const roomId = makeRoomId();
       const stub = roomStub(env, roomId);
       const initRes = await stub.fetch('https://game-room.internal/init', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ playerCount, seed })
+        body: JSON.stringify({ playerCount, humanSeats, seed })
       });
       if (!initRes.ok) return jsonResponse({ error: 'ROOM_INIT_FAILED' }, { status: 500 });
       return jsonResponse({ roomId, wsPath: `/api/rooms/${roomId}/ws` });

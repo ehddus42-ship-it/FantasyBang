@@ -45,6 +45,8 @@ node scripts/verify.mjs
 - 재접속: 브라우저 localStorage에 저장한 좌석 토큰으로 같은 좌석에 다시 접속.
 - AI 좌석은 서버(`GameRoom.advanceAi()`)가 `sim/policies.js`의 `chooseAction()`으로 직접 진행시킨다 — 클라이언트는 더 이상 AI 턴을 계산하지 않는다.
 
+**방 생성 = 로비, 게임 시작 아님.** 방을 만들면 곧바로 게임이 시작되지 않는다 — 먼저 대기실(로비)이 열리고, 방 만들 때 고른 "사람 자리" 수만큼 실제 사람이 들어와야(또는 방장이 직접 "지금 시작"을 눌러야) `newGame()`이 호출된다. 방 만들 때 사람 자리 수를 총 인원보다 적게 고르면 그 차이만큼은 처음부터 AI 전용 좌석으로 고정된다(사람은 그 번호로 절대 배정되지 않음). 이 구조 덕분에 방 만들자마자 나머지가 전부 AI로 채워져 실제 사람끼리는 못 만나던 문제가 없다.
+
 로컬에서 Cloudflare 백엔드로 실행/검증:
 
 ```powershell
@@ -53,7 +55,7 @@ npm.cmd run deploy:dry    # 실제 배포 전 dry-run
 npm.cmd run deploy:cf     # 실제 배포
 ```
 
-GitHub Actions로 배포하려면 저장소 시크릿에 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`를 등록한 뒤 `.github/workflows/deploy-cloudflare.yml`을 Actions 탭에서 수동 실행(`workflow_dispatch`)한다. 로컬 `wrangler dev` 검증과 dry-run을 통과하기 전까지는 push 자동 배포를 걸지 않았다.
+저장소 시크릿에 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`를 등록해 두면 `claude/repo-permissions-check-vqw0v1` 브랜치로 push할 때마다 `.github/workflows/deploy-cloudflare.yml`이 자동으로 빌드·테스트·배포한다(Actions 탭에서 `workflow_dispatch`로 수동 실행도 가능하다).
 
 **아직 미완성인 부분** (다음 단계): 방 생성 후 초대 링크 공유 UX 다듬기, 재접속 중 잠깐 끊긴 좌석을 AI가 대신 두지 않는 문제(사람이 돌아올 때까지 그 좌석은 멈춘다), 액션 전송 재시도/ack. GitHub Pages는 Cloudflare 배포를 실제로 검증하기 전까지 그대로 유지한다.
 
